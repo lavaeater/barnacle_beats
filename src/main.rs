@@ -36,7 +36,7 @@ fn set_window_icon(
     primary_window: Query<Entity, With<PrimaryWindow>>,
 ) {
     let primary_entity = primary_window.single();
-    let Some(primary) = windows.get_window(primary_entity) else {
+    let Some(_primary) = windows.get_window(primary_entity) else {
         return;
     };
     // let icon_buf = Cursor::new(include_bytes!(
