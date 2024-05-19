@@ -2,7 +2,7 @@
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use std::collections::HashMap;
+    use bevy::prelude::*;
 
     #[test]
     fn test_rule_evaluation() {
