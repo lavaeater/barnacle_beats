@@ -6,6 +6,7 @@ use crate::GameState;
 
 pub mod data;
 pub mod systems;
+mod parsing;
 
 pub struct StoryPlugin;
 
