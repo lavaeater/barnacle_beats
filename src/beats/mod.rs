@@ -4,8 +4,8 @@ use crate::beats::data::*;
 use crate::beats::systems::*;
 use crate::GameState;
 
-mod data;
-mod systems;
+pub mod data;
+pub mod systems;
 
 pub struct StoryPlugin;
 
