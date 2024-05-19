@@ -3,7 +3,7 @@ use bevy::hierarchy::{ChildBuilder, Children};
 use bevy::math::Vec2;
 use bevy::prelude::{AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle, Camera2dBundle, Changed, Color, ColorMaterial, Commands, default, Display, EventReader, EventWriter, Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle, PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle, Transform, Triangle2d, UiRect, Val, Visibility, With};
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
-use crate::beats::data::{Condition, FactUpdated, Rule, RuleEngine, RuleUpdated, Story, StoryBeat, StoryEngine};
+use crate::beats::data::{Condition, CoolFactStore, FactUpdated, Rule, RuleEngine, RuleUpdated, Story, StoryBeat, StoryEngine};
 use crate::beats::TextComponent;
 
 pub fn spawn_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -261,6 +261,18 @@ pub fn fact_event_system(
         }
     }
 }
+
+pub fn fact_update_event_broadcaster(
+    mut event_writer: EventWriter<FactUpdated>,
+    mut storage: ResMut<CoolFactStore>,
+) {
+    for fact in storage.updated_facts.drain() {
+        event_writer.send(FactUpdated {
+            fact
+        });
+    }
+}
+
 
 pub fn rule_event_system(
     mut query: Query<&mut Text, With<TextComponent>>,

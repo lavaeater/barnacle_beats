@@ -1,7 +1,5 @@
 use std::hash::{Hash, Hasher};
-use crate::GameState;
 use bevy::prelude::*;
-use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use bevy::utils::hashbrown::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 pub(crate) const X_EXTENT: f32 = 600.;
@@ -53,13 +51,13 @@ pub enum Fact {
 
 #[derive(Resource, Deserialize, Serialize)]
 pub struct CoolFactStore {
-    facts: HashMap<String, Fact>,
-    updated_facts: HashSet<Fact>,
+    pub(crate) facts: HashMap<String, Fact>,
+    pub(crate) updated_facts: HashSet<Fact>,
 }
 
 impl CoolFactStore {
     // Create a new instance of FactStore
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         CoolFactStore {
             facts: HashMap::new(),
             updated_facts: HashSet::new(),

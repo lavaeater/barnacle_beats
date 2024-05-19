@@ -7,7 +7,6 @@ use bevy::window::PrimaryWindow;
 use bevy::winit::WinitWindows;
 use bevy::DefaultPlugins;
 use barnacle_beats::GamePlugin; // ToDo: Replace bevy_game with your new crate name.
-use std::io::Cursor;
 
 fn main() {
     App::new()
