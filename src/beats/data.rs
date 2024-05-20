@@ -557,6 +557,6 @@ impl RuleEngine {
                     updated_rule_states.insert(name.clone());
                 }
             });
-        return updated_rule_states;
+        updated_rule_states
     }
 }
