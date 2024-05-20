@@ -1,10 +1,19 @@
-use bevy::asset::{Assets, AssetServer, Handle};
+use crate::beats::data::{
+    Condition, CoolFactStore, FactUpdated, Rule, RuleEngine, RuleUpdated, Story, StoryBeat,
+    StoryEngine,
+};
+use crate::beats::TextComponent;
+use bevy::asset::{AssetServer, Assets, Handle};
 use bevy::hierarchy::{ChildBuilder, Children};
 use bevy::math::Vec2;
-use bevy::prelude::{AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle, Camera2dBundle, Changed, Color, ColorMaterial, Commands, default, Display, EventReader, EventWriter, Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle, PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle, Transform, Triangle2d, UiRect, Val, Visibility, With};
+use bevy::prelude::{
+    default, AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle,
+    Camera2dBundle, Changed, Color, ColorMaterial, Commands, Display, EventReader, EventWriter,
+    Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle,
+    PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle,
+    Transform, Triangle2d, UiRect, Val, Visibility, With,
+};
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
-use crate::beats::data::{Condition, CoolFactStore, FactUpdated, Rule, RuleEngine, RuleUpdated, Story, StoryBeat, StoryEngine};
-use crate::beats::TextComponent;
 
 pub fn spawn_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
@@ -202,21 +211,22 @@ pub fn item_rect(builder: &mut ChildBuilder, color: Color, with_button: bool, fo
         })
         .with_children(|builder| {
             if with_button {
-                builder.spawn(ButtonBundle {
-                    style: Style {
-                        width: Val::Px(150.0),
-                        height: Val::Px(65.0),
-                        border: UiRect::all(Val::Px(5.0)),
-                        // horizontally center child text
-                        justify_content: JustifyContent::Center,
-                        // vertically center child text
-                        align_items: AlignItems::Center,
+                builder
+                    .spawn(ButtonBundle {
+                        style: Style {
+                            width: Val::Px(150.0),
+                            height: Val::Px(65.0),
+                            border: UiRect::all(Val::Px(5.0)),
+                            // horizontally center child text
+                            justify_content: JustifyContent::Center,
+                            // vertically center child text
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        border_color: BorderColor(Color::BLACK),
+                        background_color: NORMAL_BUTTON.into(),
                         ..default()
-                    },
-                    border_color: BorderColor(Color::BLACK),
-                    background_color: NORMAL_BUTTON.into(),
-                    ..default()
-                })
+                    })
                     .with_children(|parent| {
                         parent.spawn(TextBundle::from_section(
                             "Button",
@@ -267,12 +277,9 @@ pub fn fact_update_event_broadcaster(
     mut storage: ResMut<CoolFactStore>,
 ) {
     for fact in storage.updated_facts.drain() {
-        event_writer.send(FactUpdated {
-            fact
-        });
+        event_writer.send(FactUpdated { fact });
     }
 }
-
 
 pub fn rule_event_system(
     mut query: Query<&mut Text, With<TextComponent>>,
@@ -284,7 +291,6 @@ pub fn rule_event_system(
         }
     }
 }
-
 
 pub fn button_system(
     mut interaction_query: Query<
@@ -309,7 +315,8 @@ pub fn button_system(
                 border_color.0 = Color::RED;
             }
             Interaction::Hovered => {
-                text.sections[0].value = storage.get_int("button_pressed").unwrap_or(&0).to_string();
+                text.sections[0].value =
+                    storage.get_int("button_pressed").unwrap_or(&0).to_string();
                 *color = HOVERED_BUTTON.into();
                 border_color.0 = Color::WHITE;
             }
@@ -329,13 +336,11 @@ pub fn setup(
 ) {
     commands.spawn(Camera2dBundle::default());
 
-    let shapes = [
-        Mesh2dHandle(meshes.add(Triangle2d::new(
-            Vec2::Y * 50.0,
-            Vec2::new(-50.0, -50.0),
-            Vec2::new(50.0, -50.0),
-        ))),
-    ];
+    let shapes = [Mesh2dHandle(meshes.add(Triangle2d::new(
+        Vec2::Y * 50.0,
+        Vec2::new(-50.0, -50.0),
+        Vec2::new(50.0, -50.0),
+    )))];
     let num_shapes = shapes.len();
 
     for (i, shape) in shapes.into_iter().enumerate() {
@@ -347,7 +352,8 @@ pub fn setup(
             material: materials.add(color),
             transform: Transform::from_xyz(
                 // Distribute shapes from -X_EXTENT to +X_EXTENT.
-                -crate::beats::data::X_EXTENT / 2. + i as f32 / (num_shapes) as f32 * crate::beats::data::X_EXTENT,
+                -crate::beats::data::X_EXTENT / 2.
+                    + i as f32 / (num_shapes) as f32 * crate::beats::data::X_EXTENT,
                 0.0,
                 0.0,
             ),
@@ -356,14 +362,13 @@ pub fn setup(
     }
 }
 
-pub fn setup_rules(
-    mut rule_engine: ResMut<RuleEngine>,
-) {
+pub fn setup_rules(mut rule_engine: ResMut<RuleEngine>) {
     let rule1 = Rule::new(
         "button_pressed_rule".to_string(),
-        vec![
-            Condition::IntMoreThan { fact_name: "button_pressed".to_string(), expected_value: 5 },
-        ],
+        vec![Condition::IntMoreThan {
+            fact_name: "button_pressed".to_string(),
+            expected_value: 5,
+        }],
     );
 
     rule_engine.add_rule(rule1);
@@ -382,7 +387,7 @@ pub fn rule_evaluator(
         let results = rules.evaluate_rules(facts);
         for rule_name in results {
             rule_updated_writer.send(RuleUpdated {
-                rule: rule_name.clone()
+                rule: rule_name.clone(),
             });
         }
     }
@@ -399,46 +404,37 @@ pub fn setup_stories(
     // Define some rules
     let rule1 = Rule::new(
         "rule1".to_string(),
-        vec![
-            Condition::IntEquals { fact_name: "age".to_string(), expected_value: 25 },
-        ],
+        vec![Condition::IntEquals {
+            fact_name: "age".to_string(),
+            expected_value: 25,
+        }],
     );
 
     let rule2 = Rule::new(
         "rule2".to_string(),
-        vec![
-            Condition::StringEquals { fact_name: "name".to_string(), expected_value: "John".to_string() },
-        ],
+        vec![Condition::StringEquals {
+            fact_name: "name".to_string(),
+            expected_value: "John".to_string(),
+        }],
     );
 
     let rule3 = Rule::new(
         "rule3".to_string(),
-        vec![
-            Condition::BoolEquals { fact_name: "has_car".to_string(), expected_value: true },
-        ],
+        vec![Condition::BoolEquals {
+            fact_name: "has_car".to_string(),
+            expected_value: true,
+        }],
     );
 
     // Define some story beats
-    let beat1 = StoryBeat::new(
-        "beat1".to_string(),
-        vec![rule1],
-    );
+    let beat1 = StoryBeat::new("beat1".to_string(), vec![rule1]);
 
-    let beat2 = StoryBeat::new(
-        "beat2".to_string(),
-        vec![rule2],
-    );
+    let beat2 = StoryBeat::new("beat2".to_string(), vec![rule2]);
 
-    let beat3 = StoryBeat::new(
-        "beat3".to_string(),
-        vec![rule3],
-    );
+    let beat3 = StoryBeat::new("beat3".to_string(), vec![rule3]);
 
     // Define a story with the beats
-    let story = Story::new(
-        "story1".to_string(),
-        vec![beat1, beat2, beat3],
-    );
+    let story = Story::new("story1".to_string(), vec![beat1, beat2, beat3]);
 
     story_engine.add_story(story);
 }

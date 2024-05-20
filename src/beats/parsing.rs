@@ -1,3 +1,6 @@
+use crate::beats::data::{Condition, Rule, Story, StoryBeat};
+use nom::character::complete::alphanumeric1;
+use nom::error::Error;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until, take_while},
@@ -7,64 +10,85 @@ use nom::{
     sequence::{delimited, preceded, separated_pair, tuple},
     IResult,
 };
-use nom::character::complete::alphanumeric1;
-use nom::error::Error;
-use crate::beats::data::{Condition, Rule, Story, StoryBeat};
 
 fn parse_condition(input: &str) -> IResult<&str, Condition> {
     alt((
         map(
-            tuple((tag("IntEquals("), alphanumeric1::<&str, Error<&str>>, tag(", "), nom::character::complete::i32, tag(")"))),
-            |(_, fact_name, _, expected_value, _)| {
-                Condition::IntEquals {
-                    fact_name: fact_name.to_string(),
-                    expected_value,
-                }
+            tuple((
+                tag("IntEquals("),
+                alphanumeric1::<&str, Error<&str>>,
+                tag(", "),
+                nom::character::complete::i32,
+                tag(")"),
+            )),
+            |(_, fact_name, _, expected_value, _)| Condition::IntEquals {
+                fact_name: fact_name.to_string(),
+                expected_value,
             },
         ),
         map(
-            tuple((tag("StringEquals("), alphanumeric1::<&str, Error<&str>>, tag(", "), delimited(char('"'), take_until("\""), char('"')), tag(")"))),
-            |(_, fact_name, _, expected_value, _)| {
-                Condition::StringEquals {
-                    fact_name: fact_name.to_string(),
-                    expected_value: expected_value.to_string(),
-                }
+            tuple((
+                tag("StringEquals("),
+                alphanumeric1::<&str, Error<&str>>,
+                tag(", "),
+                delimited(char('"'), take_until("\""), char('"')),
+                tag(")"),
+            )),
+            |(_, fact_name, _, expected_value, _)| Condition::StringEquals {
+                fact_name: fact_name.to_string(),
+                expected_value: expected_value.to_string(),
             },
         ),
         map(
-            tuple((tag("BoolEquals("), alphanumeric1::<&str, Error<&str>>, tag(", "), alt((tag("true"), tag("false"))), tag(")"))),
-            |(_, fact_name, _, expected_value, _)| {
-                Condition::BoolEquals {
-                    fact_name: fact_name.to_string(),
-                    expected_value: expected_value == "true",
-                }
+            tuple((
+                tag("BoolEquals("),
+                alphanumeric1::<&str, Error<&str>>,
+                tag(", "),
+                alt((tag("true"), tag("false"))),
+                tag(")"),
+            )),
+            |(_, fact_name, _, expected_value, _)| Condition::BoolEquals {
+                fact_name: fact_name.to_string(),
+                expected_value: expected_value == "true",
             },
         ),
         map(
-            tuple((tag("IntMoreThan("), alphanumeric1::<&str, Error<&str>>, tag(", "), nom::character::complete::i32, tag(")"))),
-            |(_, fact_name, _, expected_value, _)| {
-                Condition::IntMoreThan {
-                    fact_name: fact_name.to_string(),
-                    expected_value,
-                }
+            tuple((
+                tag("IntMoreThan("),
+                alphanumeric1::<&str, Error<&str>>,
+                tag(", "),
+                nom::character::complete::i32,
+                tag(")"),
+            )),
+            |(_, fact_name, _, expected_value, _)| Condition::IntMoreThan {
+                fact_name: fact_name.to_string(),
+                expected_value,
             },
         ),
         map(
-            tuple((tag("IntLessThan("), alphanumeric1::<&str, Error<&str>>, tag(", "), nom::character::complete::i32, tag(")"))),
-            |(_, fact_name, _, expected_value, _)| {
-                Condition::IntLessThan {
-                    fact_name: fact_name.to_string(),
-                    expected_value,
-                }
+            tuple((
+                tag("IntLessThan("),
+                alphanumeric1::<&str, Error<&str>>,
+                tag(", "),
+                nom::character::complete::i32,
+                tag(")"),
+            )),
+            |(_, fact_name, _, expected_value, _)| Condition::IntLessThan {
+                fact_name: fact_name.to_string(),
+                expected_value,
             },
         ),
         map(
-            tuple((tag("ListContains("), alphanumeric1::<&str, Error<&str>>, tag(", "), delimited(char('"'), take_until("\""), char('"')), tag(")"))),
-            |(_, fact_name, _, expected_value, _)| {
-                Condition::ListContains {
-                    fact_name: fact_name.to_string(),
-                    expected_value: expected_value.to_string(),
-                }
+            tuple((
+                tag("ListContains("),
+                alphanumeric1::<&str, Error<&str>>,
+                tag(", "),
+                delimited(char('"'), take_until("\""), char('"')),
+                tag(")"),
+            )),
+            |(_, fact_name, _, expected_value, _)| Condition::ListContains {
+                fact_name: fact_name.to_string(),
+                expected_value: expected_value.to_string(),
             },
         ),
     ))(input)
@@ -76,7 +100,10 @@ fn parse_rule(input: &str) -> IResult<&str, Rule> {
         space0,
         take_while(|c: char| c.is_alphanumeric() || c == '_'),
         space0,
-        many1(preceded(tuple((space1, tag("- Condition: "))), parse_condition)),
+        many1(preceded(
+            tuple((space1, tag("- Condition: "))),
+            parse_condition,
+        )),
     ))(input)?;
 
     Ok((

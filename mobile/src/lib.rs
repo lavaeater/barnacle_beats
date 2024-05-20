@@ -1,6 +1,6 @@
+use barnacle_beats::GamePlugin;
 use bevy::prelude::*;
-use bevy::window::WindowMode;
-use barnacle_beats::GamePlugin; // ToDo: Replace bevy_game with your new crate name.
+use bevy::window::WindowMode; // ToDo: Replace bevy_game with your new crate name.
 
 #[bevy_main]
 fn main() {

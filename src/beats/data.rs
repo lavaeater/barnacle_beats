@@ -1,7 +1,7 @@
-use std::hash::{Hash, Hasher};
 use bevy::prelude::*;
 use bevy::utils::hashbrown::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
+use std::hash::{Hash, Hasher};
 pub const X_EXTENT: f32 = 600.;
 
 #[derive(Event)]
@@ -75,7 +75,8 @@ impl CoolFactStore {
                 panic!("Fact with key {} is not an integer", key)
             }
         } else {
-            self.facts.insert(key.clone(), Fact::Int(key.clone(), value));
+            self.facts
+                .insert(key.clone(), Fact::Int(key.clone(), value));
             self.updated_facts.insert(Fact::Int(key.clone(), value));
         }
     }
@@ -101,8 +102,10 @@ impl CoolFactStore {
                 panic!("Fact with key {} is not a string", key)
             }
         } else {
-            self.facts.insert(key.clone(), Fact::String(key.clone(), value.clone()));
-            self.updated_facts.insert(Fact::String(key.clone(), value.clone()));
+            self.facts
+                .insert(key.clone(), Fact::String(key.clone(), value.clone()));
+            self.updated_facts
+                .insert(Fact::String(key.clone(), value.clone()));
         }
     }
 
@@ -117,8 +120,10 @@ impl CoolFactStore {
                 panic!("Fact with key {} is not a boolean", key)
             }
         } else {
-            self.facts.insert(key.clone(), Fact::Bool(key.clone(), value.clone()));
-            self.updated_facts.insert(Fact::Bool(key.clone(), value.clone()));
+            self.facts
+                .insert(key.clone(), Fact::Bool(key.clone(), value.clone()));
+            self.updated_facts
+                .insert(Fact::Bool(key.clone(), value.clone()));
         }
     }
 
@@ -132,8 +137,10 @@ impl CoolFactStore {
         } else {
             let mut new_list = StringHashSet::new();
             new_list.insert(value);
-            self.facts.insert(key.clone(), Fact::StringList(key.clone(), new_list.clone()));
-            self.updated_facts.insert(Fact::StringList(key.clone(), new_list.clone()));
+            self.facts
+                .insert(key.clone(), Fact::StringList(key.clone(), new_list.clone()));
+            self.updated_facts
+                .insert(Fact::StringList(key.clone(), new_list.clone()));
         }
     }
 
@@ -183,43 +190,79 @@ impl CoolFactStore {
 // Condition enum
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum Condition {
-    IntEquals { fact_name: String, expected_value: i32 },
-    IntMoreThan { fact_name: String, expected_value: i32 },
-    IntLessThan { fact_name: String, expected_value: i32 },
-    StringEquals { fact_name: String, expected_value: String },
-    BoolEquals { fact_name: String, expected_value: bool },
-    ListContains { fact_name: String, expected_value: String },
+    IntEquals {
+        fact_name: String,
+        expected_value: i32,
+    },
+    IntMoreThan {
+        fact_name: String,
+        expected_value: i32,
+    },
+    IntLessThan {
+        fact_name: String,
+        expected_value: i32,
+    },
+    StringEquals {
+        fact_name: String,
+        expected_value: String,
+    },
+    BoolEquals {
+        fact_name: String,
+        expected_value: bool,
+    },
+    ListContains {
+        fact_name: String,
+        expected_value: String,
+    },
 }
 
 impl Condition {
     pub fn evaluate(&self, facts: &HashMap<String, Fact>) -> bool {
         match self {
-            Condition::IntEquals { fact_name, expected_value } => {
+            Condition::IntEquals {
+                fact_name,
+                expected_value,
+            } => {
                 if let Some(Fact::Int(_, value)) = facts.get(fact_name) {
                     return *value == *expected_value;
                 }
             }
-            Condition::StringEquals { fact_name, expected_value } => {
+            Condition::StringEquals {
+                fact_name,
+                expected_value,
+            } => {
                 if let Some(Fact::String(_, value)) = facts.get(fact_name) {
                     return value == expected_value;
                 }
             }
-            Condition::BoolEquals { fact_name, expected_value } => {
+            Condition::BoolEquals {
+                fact_name,
+                expected_value,
+            } => {
                 if let Some(Fact::Bool(_, value)) = facts.get(fact_name) {
                     return *value == *expected_value;
                 }
             }
-            Condition::IntMoreThan { fact_name, expected_value } => {
+            Condition::IntMoreThan {
+                fact_name,
+                expected_value,
+            } => {
                 if let Some(Fact::Int(_, value)) = facts.get(fact_name) {
                     return *value > *expected_value;
                 }
             }
-            Condition::IntLessThan { fact_name, expected_value } => {
+            Condition::IntLessThan {
+                fact_name,
+                expected_value,
+            } => {
                 if let Some(Fact::Int(_, value)) = facts.get(fact_name) {
                     return *value < *expected_value;
                 }
             }
-            Condition::ListContains { fact_name, expected_value } => {
+            Condition::ListContains {
+                fact_name,
+                expected_value,
+            } => {
                 if let Some(Fact::StringList(_, value)) = facts.get(fact_name) {
                     return value.0.contains(expected_value);
                 }
@@ -242,7 +285,9 @@ impl Rule {
     }
 
     pub fn evaluate(&self, facts: &HashMap<String, Fact>) -> bool {
-        self.conditions.iter().all(|condition| condition.evaluate(facts))
+        self.conditions
+            .iter()
+            .all(|condition| condition.evaluate(facts))
     }
 }
 
@@ -308,7 +353,9 @@ pub struct StoryEngine {
 
 impl StoryEngine {
     pub fn new() -> Self {
-        StoryEngine { stories: Vec::new() }
+        StoryEngine {
+            stories: Vec::new(),
+        }
     }
 
     pub fn add_story(&mut self, story: Story) {
@@ -548,15 +595,13 @@ impl RuleEngine {
     // Evaluate all rules based on the provided facts
     pub fn evaluate_rules(&mut self, facts: &HashMap<String, Fact>) -> HashSet<String> {
         let mut updated_rule_states = HashSet::new();
-        self.rules
-            .iter()
-            .for_each(|(name, rule)| {
-                let previous_state = self.rule_states.get(name).unwrap();
-                if previous_state != &rule.evaluate(facts) {
-                    self.rule_states.insert(name.clone(), !previous_state);
-                    updated_rule_states.insert(name.clone());
-                }
-            });
+        self.rules.iter().for_each(|(name, rule)| {
+            let previous_state = self.rule_states.get(name).unwrap();
+            if previous_state != &rule.evaluate(facts) {
+                self.rule_states.insert(name.clone(), !previous_state);
+                updated_rule_states.insert(name.clone());
+            }
+        });
         updated_rule_states
     }
 }

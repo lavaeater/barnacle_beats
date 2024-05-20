@@ -1,12 +1,12 @@
 // disable console on windows for release builds
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use barnacle_beats::GamePlugin;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy::winit::WinitWindows;
-use bevy::DefaultPlugins;
-use barnacle_beats::GamePlugin; // ToDo: Replace bevy_game with your new crate name.
+use bevy::DefaultPlugins; // ToDo: Replace bevy_game with your new crate name.
 
 fn main() {
     App::new()
