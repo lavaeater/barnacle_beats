@@ -334,7 +334,7 @@ pub fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn(Camera2dBundle::default());
+    // commands.spawn(Camera2dBundle::default());
 
     let shapes = [Mesh2dHandle(meshes.add(Triangle2d::new(
         Vec2::Y * 50.0,

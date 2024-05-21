@@ -28,6 +28,7 @@ impl Plugin for StoryPlugin {
                     fact_event_system,
                     rule_event_system,
                     rule_evaluator,
+                    button_system,
                 )
                     .run_if(in_state(GameState::Story)),
             );

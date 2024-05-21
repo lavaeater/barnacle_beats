@@ -78,6 +78,35 @@ fn setup_menu(mut commands: Commands, textures: Res<TextureAssets>) {
                         },
                     ));
                 });
+
+            // Story button
+            let button_colors = ButtonColors::default();
+            children
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            width: Val::Px(140.0),
+                            height: Val::Px(50.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..Default::default()
+                        },
+                        background_color: button_colors.normal.into(),
+                        ..Default::default()
+                    },
+                    button_colors,
+                    ChangeState(GameState::Story),
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Story",
+                        TextStyle {
+                            font_size: 40.0,
+                            color: Color::rgb(0.9, 0.9, 0.9),
+                            ..default()
+                        },
+                    ));
+                });
         });
     commands
         .spawn((
