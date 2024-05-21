@@ -13,14 +13,14 @@ pub struct StoryPlugin;
 
 impl Plugin for StoryPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(CoolFactStore::new())
+        app.insert_resource(FactsOfTheWorld::new())
             .insert_resource(StoryEngine::new())
             .add_event::<FactUpdated>()
             .add_event::<RuleUpdated>()
             .add_event::<StoryBeatFinished>()
             .add_systems(
                 OnEnter(GameState::Story),
-                (setup, spawn_layout, setup_rules, setup_stories),
+                (setup, spawn_layout, setup_stories),
             )
             .add_systems(
                 Update,

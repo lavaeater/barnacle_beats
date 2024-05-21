@@ -1,12 +1,11 @@
-use crate::beats::data::{Condition, CoolFactStore, FactUpdated, Rule, RuleEngine, RuleUpdated, Story, StoryBeat, StoryBeatFinished, StoryBuilder, StoryEngine};
+use crate::beats::data::{Condition, FactsOfTheWorld, FactUpdated, Rule, RuleUpdated, StoryBeatFinished, StoryEngine};
 use crate::beats::TextComponent;
 use bevy::asset::{AssetServer, Assets, Handle};
 use bevy::hierarchy::{ChildBuilder, Children};
 use bevy::math::Vec2;
-use bevy::prelude::{default, AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle, Camera2dBundle, Changed, Color, ColorMaterial, Commands, Display, EventReader, EventWriter, Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle, PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle, Transform, Triangle2d, UiRect, Val, Visibility, With, Local, Time};
+use bevy::prelude::{default, AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle, Changed, Color, ColorMaterial, Commands, Display, EventReader, EventWriter, Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle, PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle, Transform, Triangle2d, UiRect, Val, Visibility, With};
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
-use nom::combinator::all_consuming;
-use crate::beats::parsing::parse_story;
+use crate::beats::builders::StoryBuilder;
 
 pub fn spawn_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
@@ -274,7 +273,7 @@ pub fn fact_event_system(
 
 pub fn fact_update_event_broadcaster(
     mut event_writer: EventWriter<FactUpdated>,
-    mut storage: ResMut<CoolFactStore>,
+    mut storage: ResMut<FactsOfTheWorld>,
 ) {
     for fact in storage.updated_facts.drain() {
         event_writer.send(FactUpdated { fact });
@@ -303,7 +302,7 @@ pub fn button_system(
         (Changed<Interaction>, With<Button>),
     >,
     mut text_query: Query<&mut Text>,
-    mut storage: ResMut<crate::beats::data::CoolFactStore>,
+    mut storage: ResMut<FactsOfTheWorld>,
 ) {
     for (interaction, mut color, mut border_color, children) in &mut interaction_query {
         let mut text = text_query.get_mut(children[0]).unwrap();
@@ -353,7 +352,7 @@ pub fn setup(
             transform: Transform::from_xyz(
                 // Distribute shapes from -X_EXTENT to +X_EXTENT.
                 -crate::beats::data::X_EXTENT / 2.
-                    + i as f32 / (num_shapes) as f32 * crate::beats::data::X_EXTENT,
+                    + i as f32 / num_shapes as f32 * crate::beats::data::X_EXTENT,
                 0.0,
                 0.0,
             ),
@@ -362,22 +361,10 @@ pub fn setup(
     }
 }
 
-pub fn setup_rules(mut rule_engine: ResMut<RuleEngine>) {
-    let rule1 = Rule::new(
-        "button_pressed_rule".to_string(),
-        vec![Condition::IntMoreThan {
-            fact_name: "button_pressed".to_string(),
-            expected_value: 5,
-        }],
-    );
-
-    rule_engine.add_rule(rule1);
-}
-
 pub fn story_evaluator(
     mut fact_updated: EventReader<FactUpdated>,
     mut story_engine: ResMut<StoryEngine>,
-    cool_fact_store: Res<CoolFactStore>,
+    cool_fact_store: Res<FactsOfTheWorld>,
     mut story_beat_writer: EventWriter<StoryBeatFinished>,
 ) {
     if !fact_updated.is_empty() {
@@ -398,7 +385,7 @@ pub fn story_evaluator(
 
 pub fn story_beat_effect_applier(
     mut story_beat_reader: EventReader<StoryBeatFinished>,
-    mut cool_fact_store: ResMut<CoolFactStore>,
+    mut cool_fact_store: ResMut<FactsOfTheWorld>,
 ) {
     for event in story_beat_reader.read() {
         for effect in event.beat.effects.iter() {
@@ -419,7 +406,33 @@ pub fn setup_stories(
     This could be a simple case of enum variants to be used for this.
 
      */
-    let story = StoryBuilder::new("Story One")
-        .add_beat("Beat One")
-    
+    let story = StoryBuilder::new("Hero's Journey")
+        .add_story_beat("The Call to Adventure", |beat| {
+            beat.add_rule(Rule::new(
+                "Enough Presses".to_string(),
+                vec![Condition::IntMoreThan {
+                    fact_name: "button_pressed".to_string(),
+                    expected_value: 3,
+                }],
+            ))
+                .with_effects(|effects| {
+                    effects.set_fact_bool("quest_one_complete", true)
+                })
+        })
+        .add_story_beat("The Road of Trials", |beat| {
+            beat.add_rule(Rule::new(
+                "DefeatedEnemies".to_string(),
+                vec![Condition::IntMoreThan {
+                    fact_name: "button_pressed".to_string(),
+                    expected_value: 10,
+                }],
+            ))
+                .with_effects(|effects| {
+                    effects.set_fact_bool("quest_two_complete", true)
+                })
+        })
+        .build();
+
+    story_engine.add_story(story);
+
 }

@@ -51,14 +51,14 @@ impl Hash for StringHashSet {
 }
 
 #[derive(Resource, Deserialize, Serialize)]
-pub struct CoolFactStore {
+pub struct FactsOfTheWorld {
     pub facts: HashMap<String, Fact>,
     pub updated_facts: HashSet<Fact>,
 }
 
-impl CoolFactStore {
+impl FactsOfTheWorld {
     pub fn new() -> Self {
-        CoolFactStore {
+        FactsOfTheWorld {
             facts: HashMap::new(),
             updated_facts: HashSet::new(),
         }
@@ -389,7 +389,7 @@ pub enum Effect {
 }
 
 impl Effect {
-    pub fn apply(&self, fact_store: &mut CoolFactStore) {
+    pub fn apply(&self, fact_store: &mut FactsOfTheWorld) {
         match self {
             Effect::SetFact(fact) => {
                 match fact {
