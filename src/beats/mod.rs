@@ -19,7 +19,7 @@ impl Plugin for StoryPlugin {
             .add_event::<RuleUpdated>()
             .add_systems(
                 OnEnter(GameState::Story),
-                (setup, spawn_layout, setup_rules),
+                (setup, spawn_layout, setup_rules, setup_stories),
             )
             .add_systems(
                 Update,

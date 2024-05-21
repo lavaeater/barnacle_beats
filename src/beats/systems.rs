@@ -395,8 +395,19 @@ pub fn rule_evaluator(
 
 pub fn setup_stories(
     mut story_engine: ResMut<StoryEngine>,
-    mut cool_fact_store: ResMut<crate::beats::data::CoolFactStore>,
+    mut cool_fact_store: ResMut<CoolFactStore>,
 ) {
+    /*
+    Let's imagine two stories. One that simply requires that the button is pressed three times.
+    When pressed three times, some kind of message needs to be displayed.
+    In fact, to make all this as loosely connected as possible, we always work with facts / events.
+    I think every story beat should have some kind of list of consequences to be applied when done.
+    
+    This could be a simple case of enum variants to be used for this. 
+    
+     */
+    
+    
     cool_fact_store.store_int("age".to_string(), 25);
     cool_fact_store.store_string("name".to_string(), "John".to_string());
     cool_fact_store.store_bool("has_car".to_string(), true);
