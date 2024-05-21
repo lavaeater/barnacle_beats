@@ -1,133 +1,110 @@
-use crate::beats::data::{Condition, Effect, Fact, Rule, Story, StoryBeat, StringHashSet};
-use nom::character::complete::alphanumeric1;
-use nom::error::Error;
+use bevy::utils::HashSet;
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_until, take_while},
-    character::complete::{alpha1, char, space0, space1},
-    combinator::{all_consuming, map, opt},
-    multi::{many0, many1},
-    sequence::{delimited, preceded, separated_pair, tuple},
+    bytes::complete::{tag, take_while},
+    character::complete::{alphanumeric1, space0, space1},
+    combinator::{map, opt},
+    multi::{many1, separated_list0},
+    sequence::{preceded, tuple},
     IResult,
 };
-
-fn parse_condition(input: &str) -> IResult<&str, Condition> {
-    alt((
-        map(
-            tuple((
-                tag("IntEquals("),
-                alphanumeric1::<&str, Error<&str>>,
-                tag(", "),
-                nom::character::complete::i32,
-                tag(")"),
-            )),
-            |(_, fact_name, _, expected_value, _)| Condition::IntEquals {
-                fact_name: fact_name.to_string(),
-                expected_value,
-            },
-        ),
-        map(
-            tuple((
-                tag("StringEquals("),
-                alphanumeric1::<&str, Error<&str>>,
-                tag(", "),
-                delimited(char('"'), take_until("\""), char('"')),
-                tag(")"),
-            )),
-            |(_, fact_name, _, expected_value, _)| Condition::StringEquals {
-                fact_name: fact_name.to_string(),
-                expected_value: expected_value.to_string(),
-            },
-        ),
-        map(
-            tuple((
-                tag("BoolEquals("),
-                alphanumeric1::<&str, Error<&str>>,
-                tag(", "),
-                alt((tag("true"), tag("false"))),
-                tag(")"),
-            )),
-            |(_, fact_name, _, expected_value, _)| Condition::BoolEquals {
-                fact_name: fact_name.to_string(),
-                expected_value: expected_value == "true",
-            },
-        ),
-        map(
-            tuple((
-                tag("IntMoreThan("),
-                alphanumeric1::<&str, Error<&str>>,
-                tag(", "),
-                nom::character::complete::i32,
-                tag(")"),
-            )),
-            |(_, fact_name, _, expected_value, _)| Condition::IntMoreThan {
-                fact_name: fact_name.to_string(),
-                expected_value,
-            },
-        ),
-        map(
-            tuple((
-                tag("IntLessThan("),
-                alphanumeric1::<&str, Error<&str>>,
-                tag(", "),
-                nom::character::complete::i32,
-                tag(")"),
-            )),
-            |(_, fact_name, _, expected_value, _)| Condition::IntLessThan {
-                fact_name: fact_name.to_string(),
-                expected_value,
-            },
-        ),
-        map(
-            tuple((
-                tag("ListContains("),
-                alphanumeric1::<&str, Error<&str>>,
-                tag(", "),
-                delimited(char('"'), take_until("\""), char('"')),
-                tag(")"),
-            )),
-            |(_, fact_name, _, expected_value, _)| Condition::ListContains {
-                fact_name: fact_name.to_string(),
-                expected_value: expected_value.to_string(),
-            },
-        ),
-    ))(input)
-}
+use crate::beats::data::{Condition, Effect, Fact, Rule, Story, StoryBeat, StringHashSet};
 
 fn parse_effect(input: &str) -> IResult<&str, Effect> {
-    let (input, (_, fact_type, fact_name, fact_value)) = tuple((
-        tag("- Effect: SetFact "),
-        alphanumeric1,
-        space1,
+    let (input, (_, fact_type, _, fact_name, _, fact_value)) = tuple((
+        tag("- Set "),
+        alt((tag("Int"), tag("String"), tag("Bool"), tag("StringList"))),
+        tag(" "),
         take_while(|c: char| c.is_alphanumeric() || c == '_'),
+        tag(" to "),
+        take_while(|c: char| c.is_alphanumeric() || c == ' ' || c == ',' || c == '_'),
     ))(input)?;
 
     let fact = match fact_type {
-        "Int" => Fact::Int(fact_name.to_string(), fact_value.parse().unwrap()),
+        "Int" => {
+            let value = fact_value.parse::<i32>().unwrap();
+            Fact::Int(fact_name.to_string(), value)
+        }
         "String" => Fact::String(fact_name.to_string(), fact_value.to_string()),
-        "Bool" => Fact::Bool(fact_name.to_string(), fact_value.parse().unwrap()),
-        "StringList" => Fact::StringList(fact_name.to_string(), {
-            let mut set = StringHashSet::new();
-            set.insert(fact_value.to_string());
-            set
-        }),
-        _ => unimplemented!(),
+        "Bool" => {
+            let value = fact_value.parse::<bool>().unwrap();
+            Fact::Bool(fact_name.to_string(), value)
+        }
+        "StringList" => {
+            let values = fact_value
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .collect::<HashSet<_>>();
+            Fact::StringList(fact_name.to_string(), StringHashSet(values))
+        }
+        _ => unreachable!(),
     };
 
     Ok((input, Effect::SetFact(fact)))
 }
 
-
-fn parse_rule(input: &str) -> IResult<&str, Rule> {
-    let (input, (_, _, name, _, conditions)) = tuple((
-        tag("- Rule: "),
-        space0,
+fn parse_condition(input: &str) -> IResult<&str, Condition> {
+    let (input, (fact_name, _, operator, _, expected_value)) = tuple((
         take_while(|c: char| c.is_alphanumeric() || c == '_'),
         space0,
-        many1(preceded(
-            tuple((space1, tag("- Condition: "))),
-            parse_condition,
+        alt((
+            tag("=="),
+            tag(">"),
+            tag("<"),
+            tag("contains"),
+            tag("equals"),
         )),
+        space0,
+        take_while(|c: char| c.is_alphanumeric() || c == '_' || c == ' '),
+    ))(input)?;
+
+    let condition = match operator {
+        "==" => {
+            if let Ok(value) = expected_value.parse::<i32>() {
+                Condition::IntEquals {
+                    fact_name: fact_name.to_string(),
+                    expected_value: value,
+                }
+            } else if let Ok(value) = expected_value.parse::<bool>() {
+                Condition::BoolEquals {
+                    fact_name: fact_name.to_string(),
+                    expected_value: value,
+                }
+            } else {
+                Condition::StringEquals {
+                    fact_name: fact_name.to_string(),
+                    expected_value: expected_value.to_string(),
+                }
+            }
+        }
+        ">" => Condition::IntMoreThan {
+            fact_name: fact_name.to_string(),
+            expected_value: expected_value.parse::<i32>().unwrap(),
+        },
+        "<" => Condition::IntLessThan {
+            fact_name: fact_name.to_string(),
+            expected_value: expected_value.parse::<i32>().unwrap(),
+        },
+        "contains" => Condition::ListContains {
+            fact_name: fact_name.to_string(),
+            expected_value: expected_value.to_string(),
+        },
+        "equals" => Condition::StringEquals {
+            fact_name: fact_name.to_string(),
+            expected_value: expected_value.to_string(),
+        },
+        _ => unreachable!(),
+    };
+
+    Ok((input, condition))
+}
+
+fn parse_rule(input: &str) -> IResult<&str, Rule> {
+    let (input, (_, name, _, conditions)) = tuple((
+        tag("### Rule: "),
+        take_while(|c: char| c.is_alphanumeric() || c == '_'),
+        space0,
+        many1(preceded(space1, parse_condition)),
     ))(input)?;
 
     Ok((
@@ -140,13 +117,14 @@ fn parse_rule(input: &str) -> IResult<&str, Rule> {
 }
 
 fn parse_story_beat(input: &str) -> IResult<&str, StoryBeat> {
-    let (input, (_, _, name, _, rules, effects)) = tuple((
+    let (input, (_, _, name, _, rules, _, effects)) = tuple((
         tag("## StoryBeat: "),
         space0,
         take_while(|c: char| c.is_alphanumeric() || c == '_'),
         space0,
-        many1(preceded(|input| space1(input), parse_rule)), // Wrap space1 in a closure
-        many1(preceded(|input| space1(input), parse_effect)), // Wrap space1 in a closure
+        many1(preceded(space1, parse_rule)),
+        space0,
+        many1(preceded(space1, parse_effect)),
     ))(input)?;
 
     Ok((
@@ -166,7 +144,7 @@ pub fn parse_story(input: &str) -> IResult<&str, Story> {
         space0,
         take_while(|c: char| c.is_alphanumeric() || c == '_'),
         space0,
-        many1(preceded(space1, parse_story_beat)), // Removed tuple combinator
+        many1(preceded(space1, parse_story_beat)),
     ))(input)?;
 
     Ok((
@@ -177,26 +155,4 @@ pub fn parse_story(input: &str) -> IResult<&str, Story> {
             active_beat_index: 0,
         },
     ))
-}
-
-// Example usage
-fn main() {
-    let input = r#"
-# Story: MyStory
-
-## StoryBeat: Beat1
-- Rule: Rule1
-    - Condition: IntEquals(score, 42)
-    - Condition: StringEquals(player, "Alice")
-    - Condition: BoolEquals(is_alive, true)
-
-## StoryBeat: Beat2
-- Rule: Rule2
-    - Condition: IntMoreThan(score, 50)
-"#;
-
-    match all_consuming(parse_story)(input) {
-        Ok((_, story)) => println!("{:#?}", story),
-        Err(e) => eprintln!("Error parsing story: {:?}", e),
-    }
 }

@@ -6,6 +6,7 @@ use bevy::math::Vec2;
 use bevy::prelude::{default, AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle, Changed, Color, ColorMaterial, Commands, Display, EventReader, EventWriter, Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle, PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle, Transform, Triangle2d, UiRect, Val, Visibility, With};
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use crate::beats::builders::StoryBuilder;
+use crate::beats::parsing::parse_story;
 
 pub fn spawn_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
@@ -434,5 +435,4 @@ pub fn setup_stories(
         .build();
 
     story_engine.add_story(story);
-
 }
