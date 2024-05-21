@@ -27,11 +27,11 @@ pub enum Fact {
 pub struct StringHashSet(HashSet<String>);
 
 impl StringHashSet {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         StringHashSet(HashSet::new())
     }
 
-    fn insert(&mut self, value: String) -> bool {
+    pub(crate) fn insert(&mut self, value: String) -> bool {
         self.0.insert(value)
     }
 
@@ -296,18 +296,22 @@ impl Rule {
 pub struct StoryBeat {
     pub name: String,
     pub rules: Vec<Rule>,
+    pub effects: Vec<Effect>,
     pub finished: bool,
 }
 
 impl StoryBeat {
-    pub fn new(name: String, rules: Vec<Rule>) -> Self {
+    // Constructor for StoryBeat
+    pub fn new(name: String, rules: Vec<Rule>, effects: Vec<Effect>) -> Self {
         StoryBeat {
             name,
             rules,
+            effects,
             finished: false,
         }
     }
 
+    // Evaluate all rules for the story beat based on the provided facts
     pub fn evaluate(&mut self, facts: &HashMap<String, Fact>) {
         self.finished = self.rules.iter().all(|rule| rule.evaluate(facts));
     }
@@ -330,13 +334,18 @@ impl Story {
         }
     }
 
-    pub fn evaluate_active_beat(&mut self, facts: &HashMap<String, Fact>) {
-        if self.active_beat_index < self.beats.len() {
+    pub fn evaluate_active_beat(&mut self, facts: &HashMap<String, Fact>) -> Option<StoryBeat> {
+        return if self.active_beat_index < self.beats.len() {
             let active_beat = &mut self.beats[self.active_beat_index];
             active_beat.evaluate(facts);
             if active_beat.finished {
                 self.active_beat_index += 1;
+                Some(active_beat.clone())
+            } else {
+                None
             }
+        } else {
+            None
         }
     }
 
@@ -362,12 +371,7 @@ impl StoryEngine {
         self.stories.push(story);
     }
 
-    pub fn evaluate_stories(&mut self, facts: &HashMap<String, Fact>) {
-        for story in &mut self.stories {
-            story.evaluate_active_beat(facts);
-        }
-    }
-
+    // Check if all stories are finished
     pub fn all_stories_finished(&self) -> bool {
         self.stories.iter().all(|story| story.is_finished())
     }
@@ -497,6 +501,7 @@ impl RuleBuilder {
 pub struct StoryBeatBuilder {
     name: String,
     rules: Vec<Rule>,
+    effects: Vec<Effect>
 }
 
 impl StoryBeatBuilder {
@@ -504,6 +509,7 @@ impl StoryBeatBuilder {
         StoryBeatBuilder {
             name,
             rules: Vec::new(),
+            effects: Vec::new(),
         }
     }
 
@@ -516,6 +522,7 @@ impl StoryBeatBuilder {
         StoryBeat {
             name: self.name,
             rules: self.rules,
+            effects: self.effects,
             finished: false,
         }
     }
@@ -605,3 +612,37 @@ impl RuleEngine {
         updated_rule_states
     }
 }
+
+#[derive(Event)]
+pub struct StoryBeatFinished {
+    pub story: Story,
+    pub beat: StoryBeat,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
+pub enum Effect {
+    SetFact(Fact),
+}
+
+impl Effect {
+    pub fn apply(&self, fact_store: &mut CoolFactStore) {
+        match self {
+            Effect::SetFact(fact) => {
+                match fact {
+                    Fact::Int(name, value) => fact_store.store_int(name.clone(), *value),
+                    Fact::String(name, value) => fact_store.store_string(name.clone(), value.clone()),
+                    Fact::Bool(name, value) => fact_store.store_bool(name.clone(), *value),
+                    Fact::StringList(name, values) => {
+                        for value in &values.0 {
+                            fact_store.add_to_list(name.clone(), value.clone());
+                        }
+                    },
+                }
+            }
+        }
+    }
+}
+
+
+
+

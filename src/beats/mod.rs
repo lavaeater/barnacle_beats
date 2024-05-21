@@ -17,6 +17,7 @@ impl Plugin for StoryPlugin {
             .insert_resource(StoryEngine::new())
             .add_event::<FactUpdated>()
             .add_event::<RuleUpdated>()
+            .add_event::<StoryBeatFinished>()
             .add_systems(
                 OnEnter(GameState::Story),
                 (setup, spawn_layout, setup_rules, setup_stories),
@@ -29,6 +30,8 @@ impl Plugin for StoryPlugin {
                     rule_event_system,
                     rule_evaluator,
                     button_system,
+                    story_evaluator,
+                    story_beat_effect_applier
                 )
                     .run_if(in_state(GameState::Story)),
             );

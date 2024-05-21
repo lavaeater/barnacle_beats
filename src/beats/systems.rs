@@ -1,19 +1,12 @@
-use crate::beats::data::{
-    Condition, CoolFactStore, FactUpdated, Rule, RuleEngine, RuleUpdated, Story, StoryBeat,
-    StoryEngine,
-};
+use crate::beats::data::{Condition, CoolFactStore, FactUpdated, Rule, RuleEngine, RuleUpdated, Story, StoryBeat, StoryBeatFinished, StoryEngine};
 use crate::beats::TextComponent;
 use bevy::asset::{AssetServer, Assets, Handle};
 use bevy::hierarchy::{ChildBuilder, Children};
 use bevy::math::Vec2;
-use bevy::prelude::{
-    default, AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle,
-    Camera2dBundle, Changed, Color, ColorMaterial, Commands, Display, EventReader, EventWriter,
-    Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle,
-    PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle,
-    Transform, Triangle2d, UiRect, Val, Visibility, With,
-};
+use bevy::prelude::{default, AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle, Camera2dBundle, Changed, Color, ColorMaterial, Commands, Display, EventReader, EventWriter, Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle, PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle, Transform, Triangle2d, UiRect, Val, Visibility, With, Local, Time};
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
+use nom::combinator::all_consuming;
+use crate::beats::parsing::parse_story;
 
 pub fn spawn_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
@@ -393,6 +386,41 @@ pub fn rule_evaluator(
     }
 }
 
+pub fn story_evaluator(
+    time: Res<Time>,
+    mut local: Local<f32>,
+    mut story_engine: ResMut<StoryEngine>,
+    cool_fact_store: Res<CoolFactStore>,
+    mut story_beat_writer: EventWriter<StoryBeatFinished>,
+) {
+    *local += time.delta_seconds();
+    if *local > 1.0 {
+        *local = 0.0;
+        for story in &mut story_engine.stories {
+            match story.evaluate_active_beat(&cool_fact_store.facts) {
+                None => {}
+                Some(story_beat) => {
+                    story_beat_writer.send(StoryBeatFinished {
+                        story: story.clone(),
+                        beat: story_beat.clone(),
+                    });
+                }
+            }
+        }
+    }
+}
+
+pub fn story_beat_effect_applier(
+    mut story_beat_reader: EventReader<StoryBeatFinished>,
+    mut cool_fact_store: ResMut<CoolFactStore>,
+) {
+    for event in story_beat_reader.read() {
+        for effect in event.beat.effects.iter() {
+            effect.apply(&mut cool_fact_store);
+        }
+    }
+}
+
 pub fn setup_stories(
     mut story_engine: ResMut<StoryEngine>,
     mut cool_fact_store: ResMut<CoolFactStore>,
@@ -402,50 +430,63 @@ pub fn setup_stories(
     When pressed three times, some kind of message needs to be displayed.
     In fact, to make all this as loosely connected as possible, we always work with facts / events.
     I think every story beat should have some kind of list of consequences to be applied when done.
-    
-    This could be a simple case of enum variants to be used for this. 
-    
+
+    This could be a simple case of enum variants to be used for this.
+
      */
-    
-    
-    cool_fact_store.store_int("age".to_string(), 25);
-    cool_fact_store.store_string("name".to_string(), "John".to_string());
-    cool_fact_store.store_bool("has_car".to_string(), true);
+    let input = r#"
+# Story: First Story
 
-    // Define some rules
-    let rule1 = Rule::new(
-        "rule1".to_string(),
-        vec![Condition::IntEquals {
-            fact_name: "age".to_string(),
-            expected_value: 25,
-        }],
-    );
+## StoryBeat: The story begins...
+- Rule: Start Rule
+    - Condition: IntMoreThan(button_pressed, 3)
+    - Effect: SetFact Bool beat_one true
 
-    let rule2 = Rule::new(
-        "rule2".to_string(),
-        vec![Condition::StringEquals {
-            fact_name: "name".to_string(),
-            expected_value: "John".to_string(),
-        }],
-    );
+## StoryBeat: SecondBeat
+    - Condition: IntMoreThan(buttom_pressed, 10)
+    - Effect: SetFact Bool beat_two true
+"#;
 
-    let rule3 = Rule::new(
-        "rule3".to_string(),
-        vec![Condition::BoolEquals {
-            fact_name: "has_car".to_string(),
-            expected_value: true,
-        }],
-    );
+    match all_consuming(parse_story)(input) {
+        Ok((_, story)) => story_engine.add_story(story),
+        Err(e) => eprintln!("Error parsing story: {:?}", e),
+    }
 
-    // Define some story beats
-    let beat1 = StoryBeat::new("beat1".to_string(), vec![rule1]);
+    //
+    //
+    // // Define some rules
+    // let rule1 = Rule::new(
+    //     "rule1".to_string(),
+    //     vec![Condition::IntEquals {
+    //         fact_name: "age".to_string(),
+    //         expected_value: 25,
+    //     }],
+    // );
+    //
+    // let rule2 = Rule::new(
+    //     "rule2".to_string(),
+    //     vec![Condition::StringEquals {
+    //         fact_name: "name".to_string(),
+    //         expected_value: "John".to_string(),
+    //     }],
+    // );
+    //
+    // let rule3 = Rule::new(
+    //     "rule3".to_string(),
+    //     vec![Condition::BoolEquals {
+    //         fact_name: "has_car".to_string(),
+    //         expected_value: true,
+    //     }],
+    // );
+    //
+    // // Define some story beats
+    // let beat1 = StoryBeat::new("beat1".to_string(), vec![rule1]);
+    //
+    // let beat2 = StoryBeat::new("beat2".to_string(), vec![rule2]);
+    //
+    // let beat3 = StoryBeat::new("beat3".to_string(), vec![rule3]);
+    //
+    // // Define a story with the beats
+    // let story = Story::new("story1".to_string(), vec![beat1, beat2, beat3]);
 
-    let beat2 = StoryBeat::new("beat2".to_string(), vec![rule2]);
-
-    let beat3 = StoryBeat::new("beat3".to_string(), vec![rule3]);
-
-    // Define a story with the beats
-    let story = Story::new("story1".to_string(), vec![beat1, beat2, beat3]);
-
-    story_engine.add_story(story);
 }

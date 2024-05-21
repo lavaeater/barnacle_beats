@@ -1,4 +1,4 @@
-use crate::beats::data::{Condition, Rule, Story, StoryBeat};
+use crate::beats::data::{Condition, Effect, Fact, Rule, Story, StoryBeat, StringHashSet};
 use nom::character::complete::alphanumeric1;
 use nom::error::Error;
 use nom::{
@@ -94,6 +94,30 @@ fn parse_condition(input: &str) -> IResult<&str, Condition> {
     ))(input)
 }
 
+fn parse_effect(input: &str) -> IResult<&str, Effect> {
+    let (input, (_, fact_type, fact_name, fact_value)) = tuple((
+        tag("- Effect: SetFact "),
+        alphanumeric1,
+        space1,
+        take_while(|c: char| c.is_alphanumeric() || c == '_'),
+    ))(input)?;
+
+    let fact = match fact_type {
+        "Int" => Fact::Int(fact_name.to_string(), fact_value.parse().unwrap()),
+        "String" => Fact::String(fact_name.to_string(), fact_value.to_string()),
+        "Bool" => Fact::Bool(fact_name.to_string(), fact_value.parse().unwrap()),
+        "StringList" => Fact::StringList(fact_name.to_string(), {
+            let mut set = StringHashSet::new();
+            set.insert(fact_value.to_string());
+            set
+        }),
+        _ => unimplemented!(),
+    };
+
+    Ok((input, Effect::SetFact(fact)))
+}
+
+
 fn parse_rule(input: &str) -> IResult<&str, Rule> {
     let (input, (_, _, name, _, conditions)) = tuple((
         tag("- Rule: "),
@@ -118,12 +142,13 @@ fn parse_rule(input: &str) -> IResult<&str, Rule> {
 fn parse_story_beat(input: &str) -> IResult<&str, StoryBeat> {
     let parse_rule = |input| Ok(("", Rule::new("rule_name".to_string(), vec![]))); // Placeholder for parse_rule
 
-    let (input, (_, _, name, _, rules)) = tuple((
+    let (input, (_, _, name, _, rules, effects)) = tuple((
         tag("## StoryBeat: "),
         space0,
         take_while(|c: char| c.is_alphanumeric() || c == '_'),
         space0,
         many1(preceded(|input| space1(input), parse_rule)), // Wrap space1 in a closure
+        many1(preceded(|input| space1(input), parse_effect)), // Wrap space1 in a closure
     ))(input)?;
 
     Ok((
@@ -131,12 +156,13 @@ fn parse_story_beat(input: &str) -> IResult<&str, StoryBeat> {
         StoryBeat {
             name: name.to_string(),
             rules,
+            effects,
             finished: false,
         },
     ))
 }
 
-fn parse_story(input: &str) -> IResult<&str, Story> {
+pub fn parse_story(input: &str) -> IResult<&str, Story> {
     let (input, (_, _, name, _, beats)) = tuple((
         tag("# Story: "),
         space0,
