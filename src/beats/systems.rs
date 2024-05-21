@@ -257,10 +257,17 @@ const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
 pub fn fact_event_system(
     mut query: Query<&mut Text, With<TextComponent>>,
     mut fact_update_events: EventReader<FactUpdated>,
+    mut story_beat_updated: EventReader<StoryBeatFinished>
 ) {
     for event in fact_update_events.read() {
         for mut text in query.iter_mut() {
-            text.sections[0].value = format!("{}\n{:?}", text.sections[0].value, event.fact);
+            text.sections[0].value = format!("{}\n Fact Updated: {:?}\n", text.sections[0].value, event.fact);
+        }
+    }
+
+    for story_updated in story_beat_updated.read() {
+        for mut text in query.iter_mut() {
+            text.sections[0].value = format!("{}\n Story Beat updated: {:?}\n", text.sections[0].value, story_updated.beat.name);
         }
     }
 }
@@ -367,35 +374,14 @@ pub fn setup_rules(mut rule_engine: ResMut<RuleEngine>) {
     rule_engine.add_rule(rule1);
 }
 
-pub fn rule_evaluator(
-    mut rules: ResMut<RuleEngine>,
-    mut fact_updated: EventReader<FactUpdated>,
-    mut rule_updated_writer: EventWriter<RuleUpdated>,
-    storage: Res<crate::beats::data::CoolFactStore>,
-) {
-    // we obviously only update when facts are updated. In future, only update rules
-    // that are affected by the updated facts
-    for _ in fact_updated.read() {
-        let facts = &storage.facts;
-        let results = rules.evaluate_rules(facts);
-        for rule_name in results {
-            rule_updated_writer.send(RuleUpdated {
-                rule: rule_name.clone(),
-            });
-        }
-    }
-}
-
 pub fn story_evaluator(
-    time: Res<Time>,
-    mut local: Local<f32>,
+    mut fact_updated: EventReader<FactUpdated>,
     mut story_engine: ResMut<StoryEngine>,
     cool_fact_store: Res<CoolFactStore>,
     mut story_beat_writer: EventWriter<StoryBeatFinished>,
 ) {
-    *local += time.delta_seconds();
-    if *local > 1.0 {
-        *local = 0.0;
+    if !fact_updated.is_empty() {
+        fact_updated.clear();
         for story in &mut story_engine.stories {
             match story.evaluate_active_beat(&cool_fact_store.facts) {
                 None => {}
@@ -423,7 +409,6 @@ pub fn story_beat_effect_applier(
 
 pub fn setup_stories(
     mut story_engine: ResMut<StoryEngine>,
-    mut cool_fact_store: ResMut<CoolFactStore>,
 ) {
     /*
     Let's imagine two stories. One that simply requires that the button is pressed three times.
@@ -437,14 +422,15 @@ pub fn setup_stories(
     let input = r#"
 # Story: First Story
 
-## StoryBeat: The story begins...
+## StoryBeat: The story begins
 - Rule: Start Rule
     - Condition: IntMoreThan(button_pressed, 3)
-    - Effect: SetFact Bool beat_one true
+- Effect: SetFact Bool beat_one true
 
 ## StoryBeat: SecondBeat
+- Rule: Start Second Rule
     - Condition: IntMoreThan(buttom_pressed, 10)
-    - Effect: SetFact Bool beat_two true
+- Effect: SetFact Bool beat_two true
 "#;
 
     match all_consuming(parse_story)(input) {
@@ -488,5 +474,4 @@ pub fn setup_stories(
     //
     // // Define a story with the beats
     // let story = Story::new("story1".to_string(), vec![beat1, beat2, beat3]);
-
 }

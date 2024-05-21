@@ -28,7 +28,6 @@ impl Plugin for StoryPlugin {
                     fact_update_event_broadcaster,
                     fact_event_system,
                     rule_event_system,
-                    rule_evaluator,
                     button_system,
                     story_evaluator,
                     story_beat_effect_applier

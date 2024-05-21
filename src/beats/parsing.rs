@@ -140,8 +140,6 @@ fn parse_rule(input: &str) -> IResult<&str, Rule> {
 }
 
 fn parse_story_beat(input: &str) -> IResult<&str, StoryBeat> {
-    let parse_rule = |input| Ok(("", Rule::new("rule_name".to_string(), vec![]))); // Placeholder for parse_rule
-
     let (input, (_, _, name, _, rules, effects)) = tuple((
         tag("## StoryBeat: "),
         space0,
