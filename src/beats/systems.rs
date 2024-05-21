@@ -1,4 +1,4 @@
-use crate::beats::data::{Condition, CoolFactStore, FactUpdated, Rule, RuleEngine, RuleUpdated, Story, StoryBeat, StoryBeatFinished, StoryEngine};
+use crate::beats::data::{Condition, CoolFactStore, FactUpdated, Rule, RuleEngine, RuleUpdated, Story, StoryBeat, StoryBeatFinished, StoryBuilder, StoryEngine};
 use crate::beats::TextComponent;
 use bevy::asset::{AssetServer, Assets, Handle};
 use bevy::hierarchy::{ChildBuilder, Children};
@@ -419,59 +419,7 @@ pub fn setup_stories(
     This could be a simple case of enum variants to be used for this.
 
      */
-    let input = r#"
-# Story: First Story
-
-## StoryBeat: The story begins
-- Rule: Start Rule
-    - Condition: IntMoreThan(button_pressed, 3)
-- Effect: SetFact Bool beat_one true
-
-## StoryBeat: SecondBeat
-- Rule: Start Second Rule
-    - Condition: IntMoreThan(buttom_pressed, 10)
-- Effect: SetFact Bool beat_two true
-"#;
-
-    match all_consuming(parse_story)(input) {
-        Ok((_, story)) => story_engine.add_story(story),
-        Err(e) => eprintln!("Error parsing story: {:?}", e),
-    }
-
-    //
-    //
-    // // Define some rules
-    // let rule1 = Rule::new(
-    //     "rule1".to_string(),
-    //     vec![Condition::IntEquals {
-    //         fact_name: "age".to_string(),
-    //         expected_value: 25,
-    //     }],
-    // );
-    //
-    // let rule2 = Rule::new(
-    //     "rule2".to_string(),
-    //     vec![Condition::StringEquals {
-    //         fact_name: "name".to_string(),
-    //         expected_value: "John".to_string(),
-    //     }],
-    // );
-    //
-    // let rule3 = Rule::new(
-    //     "rule3".to_string(),
-    //     vec![Condition::BoolEquals {
-    //         fact_name: "has_car".to_string(),
-    //         expected_value: true,
-    //     }],
-    // );
-    //
-    // // Define some story beats
-    // let beat1 = StoryBeat::new("beat1".to_string(), vec![rule1]);
-    //
-    // let beat2 = StoryBeat::new("beat2".to_string(), vec![rule2]);
-    //
-    // let beat3 = StoryBeat::new("beat3".to_string(), vec![rule3]);
-    //
-    // // Define a story with the beats
-    // let story = Story::new("story1".to_string(), vec![beat1, beat2, beat3]);
+    let story = StoryBuilder::new("Story One")
+        .add_beat("Beat One")
+    
 }

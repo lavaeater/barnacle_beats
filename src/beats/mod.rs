@@ -7,13 +7,13 @@ use bevy::prelude::{in_state, Component, IntoSystemConfigs, OnEnter};
 pub mod data;
 mod parsing;
 pub mod systems;
+mod builders;
 
 pub struct StoryPlugin;
 
 impl Plugin for StoryPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(CoolFactStore::new())
-            .insert_resource(RuleEngine::new())
             .insert_resource(StoryEngine::new())
             .add_event::<FactUpdated>()
             .add_event::<RuleUpdated>()
