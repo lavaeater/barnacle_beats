@@ -1,5 +1,5 @@
 use bevy::utils::HashSet;
-use crate::beats::data::{Effect, Fact, Rule, Story, StoryBeat, StringHashSet};
+use crate::beats::data::{Condition, Effect, Fact, Rule, Story, StoryBeat, StringHashSet};
 
 #[derive(Debug, Default)]
 pub struct EffectBuilder {
@@ -53,17 +53,16 @@ impl StoryBeatBuilder {
             effects: Vec::new(),
         }
     }
-
-    pub fn add_rule(mut self, rule: Rule) -> Self {
+    pub fn with_rule<F>(mut self, name: impl Into<String>, build_fn: F) -> Self
+        where
+            F: FnOnce(RuleBuilder) -> RuleBuilder,
+    {
+        let builder = RuleBuilder::new(name.into());
+        let rule = build_fn(builder).build();
         self.rules.push(rule);
         self
     }
-
-    pub fn add_effect(mut self, effect: Effect) -> Self {
-        self.effects.push(effect);
-        self
-    }
-
+    
     pub fn with_effects<F>(mut self, build_fn: F) -> Self
         where
             F: FnOnce(EffectBuilder) -> EffectBuilder,
@@ -85,8 +84,36 @@ impl StoryBeatBuilder {
 }
 
 #[derive(Debug, Default)]
+pub struct RuleBuilder {
+    name: String,
+    conditions: Vec<Condition>,
+}
+
+impl RuleBuilder {
+    pub fn new(name: impl Into<String>) -> Self {
+        RuleBuilder {
+            name: name.into(),
+            conditions: Vec::new(),
+        }
+    }
+
+    pub fn with_condition(mut self, condition: Condition) -> Self {
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn build(self) -> Rule {
+        Rule {
+            name: self.name,
+            conditions: self.conditions,
+        }
+    }
+}
+
+#[derive(Debug, Default)]
 pub struct StoryBuilder {
     name: String,
+    pre_requisites: Vec<Rule>,
     beats: Vec<StoryBeat>,
 }
 
@@ -95,6 +122,7 @@ impl StoryBuilder {
         StoryBuilder {
             name: name.into(),
             beats: Vec::new(),
+            pre_requisites: Vec::new(),
         }
     }
 
@@ -108,11 +136,17 @@ impl StoryBuilder {
         self
     }
 
+    pub fn add_pre_requisite<F>(mut self, name: impl Into<String>, build_fn: F) -> Self
+        where
+            F: FnOnce(RuleBuilder) -> RuleBuilder,
+    {
+        let builder = RuleBuilder::new(name.into());
+        let rule = build_fn(builder).build();
+        self.pre_requisites.push(rule);
+        self
+    }
+
     pub fn build(self) -> Story {
-        Story {
-            name: self.name,
-            beats: self.beats,
-            active_beat_index: 0,
-        }
+        Story::new(self.name, self.pre_requisites, self.beats)
     }
 }

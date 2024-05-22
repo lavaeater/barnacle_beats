@@ -6,7 +6,6 @@ use bevy::math::Vec2;
 use bevy::prelude::{default, AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle, Changed, Color, ColorMaterial, Commands, Display, EventReader, EventWriter, Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle, PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle, Transform, Triangle2d, UiRect, Val, Visibility, With};
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use crate::beats::builders::StoryBuilder;
-use crate::beats::parsing::parse_story;
 
 pub fn spawn_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
@@ -257,7 +256,7 @@ const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
 pub fn fact_event_system(
     mut query: Query<&mut Text, With<TextComponent>>,
     mut fact_update_events: EventReader<FactUpdated>,
-    mut story_beat_updated: EventReader<StoryBeatFinished>
+    mut story_beat_updated: EventReader<StoryBeatFinished>,
 ) {
     for event in fact_update_events.read() {
         for mut text in query.iter_mut() {
@@ -370,7 +369,11 @@ pub fn story_evaluator(
 ) {
     if !fact_updated.is_empty() {
         fact_updated.clear();
-        for story in &mut story_engine.stories {
+        for story in &mut story_engine.stories.iter_mut().filter(|s| !s.is_started) {
+            story.start_if_possible(&cool_fact_store.facts);
+        }
+
+        for story in &mut story_engine.stories.iter_mut().filter(|s| s.is_started && !s.is_finished()) {
             match story.evaluate_active_beat(&cool_fact_store.facts) {
                 None => {}
                 Some(story_beat) => {
@@ -408,26 +411,30 @@ pub fn setup_stories(
 
      */
     let story = StoryBuilder::new("Hero's Journey")
+        .add_pre_requisite("The Call to Adventure", |pre_req| {
+            pre_req.with_condition(Condition::IntMoreThan {
+                fact_name: "button_pressed".to_string(),
+                expected_value: 3,
+            })
+        })
         .add_story_beat("The Call to Adventure", |beat| {
-            beat.add_rule(Rule::new(
-                "Enough Presses".to_string(),
-                vec![Condition::IntMoreThan {
+            beat.with_rule("Enough Presses", |rule| {
+                rule.with_condition(Condition::IntMoreThan {
                     fact_name: "button_pressed".to_string(),
                     expected_value: 3,
-                }],
-            ))
+                })
+            })
                 .with_effects(|effects| {
                     effects.set_fact_bool("quest_one_complete", true)
                 })
         })
         .add_story_beat("The Road of Trials", |beat| {
-            beat.add_rule(Rule::new(
-                "DefeatedEnemies".to_string(),
-                vec![Condition::IntMoreThan {
+            beat.with_rule("DefeatedEnemies", |rule| {
+                rule.with_condition(Condition::IntMoreThan {
                     fact_name: "button_pressed".to_string(),
-                    expected_value: 10,
-                }],
-            ))
+                    expected_value: 5,
+                })
+            })
                 .with_effects(|effects| {
                     effects.set_fact_bool("quest_two_complete", true)
                 })

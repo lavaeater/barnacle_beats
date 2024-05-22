@@ -5,7 +5,6 @@ use bevy::app::{App, Plugin, Update};
 use bevy::prelude::{in_state, Component, IntoSystemConfigs, OnEnter};
 
 pub mod data;
-mod parsing;
 pub mod systems;
 mod builders;
 

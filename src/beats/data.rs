@@ -321,21 +321,25 @@ impl StoryBeat {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct Story {
     pub name: String,
+    pub pre_requisites: Vec<Rule>,
     pub beats: Vec<StoryBeat>,
+    pub is_started: bool,
     pub active_beat_index: usize,
 }
 
 impl Story {
-    pub fn new(name: String, beats: Vec<StoryBeat>) -> Self {
+    pub fn new(name: String, pre_requisites: Vec<Rule>, beats: Vec<StoryBeat>) -> Self {
         Story {
             name,
+            pre_requisites,
             beats,
+            is_started: false,
             active_beat_index: 0,
         }
     }
 
     pub fn evaluate_active_beat(&mut self, facts: &HashMap<String, Fact>) -> Option<StoryBeat> {
-        return if self.active_beat_index < self.beats.len() {
+        if self.active_beat_index < self.beats.len() {
             let active_beat = &mut self.beats[self.active_beat_index];
             active_beat.evaluate(facts);
             if active_beat.finished {
@@ -347,6 +351,13 @@ impl Story {
         } else {
             None
         }
+    }
+
+    pub fn start_if_possible(&mut self, facts: &HashMap<String, Fact>) -> bool {
+        if !self.is_started {
+            self.is_started = self.pre_requisites.iter().all(|rule| rule.evaluate(facts));
+        }
+        self.is_started
     }
 
     pub fn is_finished(&self) -> bool {
