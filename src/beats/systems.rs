@@ -411,10 +411,10 @@ pub fn setup_stories(
 
      */
     let story = StoryBuilder::new("Hero's Journey")
-        .add_pre_requisite("The Call to Adventure", |pre_req| {
+        .add_pre_requisite("Before We Start", |pre_req| {
             pre_req.with_condition(Condition::IntMoreThan {
                 fact_name: "button_pressed".to_string(),
-                expected_value: 3,
+                expected_value: 1,
             })
         })
         .add_story_beat("The Call to Adventure", |beat| {

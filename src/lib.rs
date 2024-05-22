@@ -6,6 +6,7 @@ mod beats;
 mod loading;
 mod menu;
 mod player;
+mod ui;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
