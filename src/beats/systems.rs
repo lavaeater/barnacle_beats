@@ -6,36 +6,52 @@ use bevy::math::Vec2;
 use bevy::prelude::{default, AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle, Changed, Color, ColorMaterial, Commands, Display, EventReader, EventWriter, Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle, PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle, Transform, Triangle2d, UiRect, Val, Visibility, With};
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use crate::beats::builders::StoryBuilder;
+use crate::ui::builders::NodeBundleBuilder;
 
 pub fn spawn_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     // Top-level grid (app frame)
     commands
-        .spawn(NodeBundle {
-            style: Style {
-                // Use the CSS Grid algorithm for laying out this node
-                display: Display::Grid,
-                // Make node fill the entirety it's parent (in this case the window)
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                // Set the grid to have 2 columns with sizes [min-content, minmax(0, 1fr)]
-                //   - The first column will size to the size of it's contents
-                //   - The second column will take up the remaining available space
-                grid_template_columns: vec![GridTrack::min_content(), GridTrack::flex(1.0)],
-                // Set the grid to have 3 rows with sizes [auto, minmax(0, 1fr), 20px]
-                //  - The first row will size to the size of it's contents
-                //  - The second row take up remaining available space (after rows 1 and 3 have both been sized)
-                //  - The third row will be exactly 20px high
-                grid_template_rows: vec![
-                    GridTrack::auto(),
-                    GridTrack::flex(1.0),
-                    GridTrack::px(20.),
-                ],
-                ..default()
-            },
-            background_color: BackgroundColor(Color::WHITE),
-            ..default()
-        })
+        .spawn(
+            NodeBundleBuilder::new()
+                .with_style(|style_builder| {
+                    style_builder
+                        .with_grid()
+                        .width_and_height_in_percent(100.0, 100.0)
+                        .grid_template_columns(vec![GridTrack::min_content(), GridTrack::flex(1.0)])
+                        .grid_template_rows(vec![
+                            GridTrack::auto(),
+                            GridTrack::flex(1.0),
+                            GridTrack::px(20.),
+                        ])
+                })
+                .build()
+            // NodeBundle {
+            //     style: Style {
+            //         // Use the CSS Grid algorithm for laying out this node
+            //         display: Display::Grid,
+            //         // Make node fill the entirety it's parent (in this case the window)
+            //         width: Val::Percent(100.0),
+            //         height: Val::Percent(100.0),
+            //         // Set the grid to have 2 columns with sizes [min-content, minmax(0, 1fr)]
+            //         //   - The first column will size to the size of it's contents
+            //         //   - The second column will take up the remaining available space
+            //         grid_template_columns: vec![GridTrack::min_content(), GridTrack::flex(1.0)],
+            //         // Set the grid to have 3 rows with sizes [auto, minmax(0, 1fr), 20px]
+            //         //  - The first row will size to the size of it's contents
+            //         //  - The second row take up remaining available space (after rows 1 and 3 have both been sized)
+            //         //  - The third row will be exactly 20px high
+            //         grid_template_rows: vec![
+            //             GridTrack::auto(),
+            //             GridTrack::flex(1.0),
+            //             GridTrack::px(20.),
+            //         ],
+            //         ..default()
+            //     },
+            //     background_color: BackgroundColor(Color::WHITE),
+            //     ..default()
+            // }
+        )
         .with_children(|builder| {
             // Header
             builder

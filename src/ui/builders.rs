@@ -1,131 +1,54 @@
 use bevy::prelude::{AlignContent, AlignItems, AlignSelf, BackgroundColor, BorderColor, Direction, Display, FlexDirection, FlexWrap, GlobalTransform, GridAutoFlow, GridPlacement, GridTrack, InheritedVisibility, JustifyContent, JustifyItems, JustifySelf, Node, NodeBundle, Overflow, PositionType, RepeatedGridTrack, Style, Transform, UiRect, Val, ViewVisibility, Visibility, ZIndex};
 use bevy::ui::FocusPolicy;
+use bevy::utils::default;
 
 pub struct StyleBuilder {
     pub display: Display,
-    pub position_type: PositionType,
-    pub overflow: Overflow,
-    pub direction: Direction,
-    pub left: Val,
-    pub right: Val,
-    pub top: Val,
-    pub bottom: Val,
     pub width: Val,
     pub height: Val,
-    pub min_width: Val,
-    pub min_height: Val,
-    pub max_width: Val,
-    pub max_height: Val,
-    pub aspect_ratio: Option<f32>,
-    pub align_items: AlignItems,
-    pub justify_items: JustifyItems,
-    pub align_self: AlignSelf,
-    pub justify_self: JustifySelf,
-    pub align_content: AlignContent,
-    pub justify_content: JustifyContent,
-    pub margin: UiRect,
-    pub padding: UiRect,
-    pub border: UiRect,
-    pub flex_direction: FlexDirection,
-    pub flex_wrap: FlexWrap,
-    pub flex_grow: f32,
-    pub flex_shrink: f32,
-    pub flex_basis: Val,
-    pub row_gap: Val,
-    pub column_gap: Val,
-    pub grid_auto_flow: GridAutoFlow,
     pub grid_template_rows: Vec<RepeatedGridTrack>,
     pub grid_template_columns: Vec<RepeatedGridTrack>,
-    pub grid_auto_rows: Vec<GridTrack>,
-    pub grid_auto_columns: Vec<GridTrack>,
-    pub grid_row: GridPlacement,
-    pub grid_column: GridPlacement,
 }
 
 impl StyleBuilder {
     pub fn new() -> Self {
         StyleBuilder {
             display: Default::default(),
-            position_type: Default::default(),
-            overflow: Default::default(),
-            direction: Default::default(),
-            left: Default::default(),
-            right: Default::default(),
-            top: Default::default(),
-            bottom: Default::default(),
             width: Default::default(),
             height: Default::default(),
-            min_width: Default::default(),
-            min_height: Default::default(),
-            max_width: Default::default(),
-            max_height: Default::default(),
-            aspect_ratio: None,
-            align_items: Default::default(),
-            justify_items: Default::default(),
-            align_self: Default::default(),
-            justify_self: Default::default(),
-            align_content: Default::default(),
-            justify_content: Default::default(),
-            margin: Default::default(),
-            padding: Default::default(),
-            border: Default::default(),
-            flex_direction: Default::default(),
-            flex_wrap: Default::default(),
-            flex_grow: 0.0,
-            flex_shrink: 0.0,
-            flex_basis: Default::default(),
-            row_gap: Default::default(),
-            column_gap: Default::default(),
-            grid_auto_flow: Default::default(),
             grid_template_rows: vec![],
             grid_template_columns: vec![],
-            grid_auto_rows: vec![],
-            grid_auto_columns: vec![],
-            grid_row: Default::default(),
-            grid_column: Default::default(),
         }
+    }
+
+    pub fn with_grid(mut self) -> Self {
+        self.display = Display::Grid;
+        self
+    }
+
+    pub fn width_and_height_in_percent(mut self, width: f32, height: f32) -> Self {
+        self.width = Val::Percent(width);
+        self.height = Val::Percent(height);
+        self
+    }
+
+    pub fn grid_template_columns(mut self, cols: Vec<RepeatedGridTrack>) -> Self {
+        self.grid_template_columns = cols;
+        self
+    }
+    pub fn grid_template_rows(mut self, rows: Vec<RepeatedGridTrack>) -> Self {
+        self.grid_template_rows = rows;
+        self
     }
 
     pub fn build(self) -> Style {
         Style {
             display: self.display,
-            position_type: self.position_type,
-            overflow: self.overflow,
-            direction: self.direction,
-            left: self.left,
-            right: self.right,
-            top: self.top,
-            bottom: self.bottom,
             width: self.width,
             height: self.height,
-            min_width: self.min_width,
-            min_height: self.min_height,
-            max_width: self.max_width,
-            max_height: self.max_height,
-            aspect_ratio: self.aspect_ratio,
-            align_items: self.align_items,
-            justify_items: self.justify_items,
-            align_self: self.align_self,
-            justify_self: self.justify_self,
-            align_content: self.align_content,
-            justify_content: self.justify_content,
-            margin: self.margin,
-            padding: self.padding,
-            border: self.border,
-            flex_direction: self.flex_direction,
-            flex_wrap: self.flex_wrap,
-            flex_grow: self.flex_grow,
-            flex_shrink: self.flex_shrink,
-            flex_basis: self.flex_basis,
-            row_gap: self.row_gap,
-            column_gap: self.column_gap,
-            grid_auto_flow: self.grid_auto_flow,
             grid_template_rows: self.grid_template_rows,
             grid_template_columns: self.grid_template_columns,
-            grid_auto_rows: self.grid_auto_rows,
-            grid_auto_columns: self.grid_auto_columns,
-            grid_row: self.grid_row,
-            grid_column: self.grid_column,
+            ..default()
         }
     }
 }
