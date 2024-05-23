@@ -1,7 +1,9 @@
 use bevy::math::AspectRatio;
-use bevy::prelude::{AlignContent, AlignItems, AlignSelf, BackgroundColor, BorderColor, Color, Direction, Display, FlexDirection, FlexWrap, GlobalTransform, GridAutoFlow, GridPlacement, GridTrack, InheritedVisibility, JustifyContent, JustifyItems, JustifySelf, Node, NodeBundle, Overflow, PositionType, RepeatedGridTrack, Style, Transform, UiRect, Val, ViewVisibility, Visibility, ZIndex};
+use bevy::prelude::{AlignContent, AlignItems, AlignSelf, BackgroundColor, BorderColor, BuildChildren, ButtonBundle, ChildBuilder, Color, Direction, Display, FlexDirection, FlexWrap, GlobalTransform, GridAutoFlow, GridPlacement, GridTrack, Handle, InheritedVisibility, JustifyContent, JustifyItems, JustifySelf, Node, NodeBundle, Overflow, PositionType, RepeatedGridTrack, Style, Transform, UiRect, Val, ViewVisibility, Visibility, ZIndex};
+use bevy::text::Font;
 use bevy::ui::FocusPolicy;
 use bevy::utils::default;
+use crate::beats::systems::{NORMAL_BUTTON, text_bundle};
 
 pub struct StyleBuilder {
     style: Style,
@@ -73,6 +75,21 @@ impl StyleBuilder {
     pub fn build(self) -> Style {
         self.style.clone()
     }
+}
+
+pub fn add_button<F>(mut child_builder: &mut ChildBuilder, text: &str, font: Handle<Font>, font_size: f32, text_color: Color, button_color:Color, button_border_color: Color, build_fn: F)
+    where
+        F: FnOnce(StyleBuilder) -> StyleBuilder, {
+    child_builder
+        .spawn(ButtonBundle {
+            style: build_fn(StyleBuilder::new()).build(),
+            border_color: BorderColor(button_border_color),
+            background_color: BackgroundColor(button_color),
+            ..default()
+        })
+        .with_children(|parent| {
+            text_bundle(parent, font, text, font_size, text_color);
+        });
 }
 
 pub struct NodeBundleBuilder {

@@ -6,7 +6,7 @@ use bevy::math::Vec2;
 use bevy::prelude::{default, AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle, Changed, Color, ColorMaterial, Commands, Display, EventReader, EventWriter, Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle, PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle, Transform, Triangle2d, UiRect, Val, Visibility, With};
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use crate::beats::builders::StoryBuilder;
-use crate::ui::builders::NodeBundleBuilder;
+use crate::ui::builders::{add_button, NodeBundleBuilder};
 
 pub fn spawn_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
@@ -185,32 +185,11 @@ pub fn item_rect(builder: &mut ChildBuilder, color: Color, with_button: bool, fo
         })
         .with_children(|builder| {
             if with_button {
-                builder
-                    .spawn(ButtonBundle {
-                        style: Style {
-                            width: Val::Px(150.0),
-                            height: Val::Px(65.0),
-                            border: UiRect::all(Val::Px(5.0)),
-                            // horizontally center child text
-                            justify_content: JustifyContent::Center,
-                            // vertically center child text
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        border_color: BorderColor(Color::BLACK),
-                        background_color: NORMAL_BUTTON.into(),
-                        ..default()
-                    })
-                    .with_children(|parent| {
-                        parent.spawn(TextBundle::from_section(
-                            "Button",
-                            TextStyle {
-                                font,
-                                font_size: 40.0,
-                                color: Color::rgb(0.9, 0.9, 0.9),
-                            },
-                        ));
-                    });
+                add_button(builder, "Press", font.clone(), 24.0, Color::WHITE, color, Color::WHITE, |style_builder| {
+                    style_builder
+                        .with_grid()
+                        .width_and_height_in_percent(100.0, 100.0)
+                })   
             }
 
             builder.spawn(NodeBundle {
@@ -231,7 +210,7 @@ pub fn text_bundle(builder: &mut ChildBuilder, font: Handle<Font>, text: &str, f
     ));
 }
 
-const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
+pub(crate) const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
 
