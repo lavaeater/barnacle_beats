@@ -26,47 +26,21 @@ pub fn spawn_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
                         ])
                 })
                 .build()
-            // NodeBundle {
-            //     style: Style {
-            //         // Use the CSS Grid algorithm for laying out this node
-            //         display: Display::Grid,
-            //         // Make node fill the entirety it's parent (in this case the window)
-            //         width: Val::Percent(100.0),
-            //         height: Val::Percent(100.0),
-            //         // Set the grid to have 2 columns with sizes [min-content, minmax(0, 1fr)]
-            //         //   - The first column will size to the size of it's contents
-            //         //   - The second column will take up the remaining available space
-            //         grid_template_columns: vec![GridTrack::min_content(), GridTrack::flex(1.0)],
-            //         // Set the grid to have 3 rows with sizes [auto, minmax(0, 1fr), 20px]
-            //         //  - The first row will size to the size of it's contents
-            //         //  - The second row take up remaining available space (after rows 1 and 3 have both been sized)
-            //         //  - The third row will be exactly 20px high
-            //         grid_template_rows: vec![
-            //             GridTrack::auto(),
-            //             GridTrack::flex(1.0),
-            //             GridTrack::px(20.),
-            //         ],
-            //         ..default()
-            //     },
-            //     background_color: BackgroundColor(Color::WHITE),
-            //     ..default()
-            // }
         )
         .with_children(|builder| {
             // Header
             builder
-                .spawn(NodeBundle {
-                    style: Style {
-                        display: Display::Grid,
-                        // Make this node span two grid columns so that it takes up the entire top tow
-                        grid_column: GridPlacement::span(2),
-                        padding: UiRect::all(Val::Px(6.0)),
-                        ..default()
-                    },
-                    ..default()
-                })
+                .spawn(NodeBundleBuilder::new()
+                        .with_style(|style_builder| {
+                            style_builder
+                                .with_grid()
+                                .span_columns(2)
+                                .pad_all_px(6.0)
+                        })
+                        .build()
+                )
                 .with_children(|builder| {
-                    spawn_nested_text_bundle(builder, font.clone(), "Bevy CSS Grid Layout Example");
+                    text_bundle(builder, font.clone(), "Bevy CSS Grid Layout Example", 24.0, Color::BLACK);
                 });
 
             // Main content grid (auto placed in row 2, column 1)
@@ -254,15 +228,19 @@ pub fn item_rect(builder: &mut ChildBuilder, color: Color, with_button: bool, fo
         });
 }
 
-pub fn spawn_nested_text_bundle(builder: &mut ChildBuilder, font: Handle<Font>, text: &str) {
+pub fn text_bundle(builder: &mut ChildBuilder, font: Handle<Font>, text: &str, font_size: f32, color: Color) {
     builder.spawn(TextBundle::from_section(
         text,
         TextStyle {
             font,
-            font_size: 24.0,
-            color: Color::BLACK,
+            font_size,
+            color,
         },
     ));
+}
+
+pub fn spawn_nested_text_bundle(builder: &mut ChildBuilder, font: Handle<Font>, text: &str) {
+    builder.spawn(text_bundle());
 }
 
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);

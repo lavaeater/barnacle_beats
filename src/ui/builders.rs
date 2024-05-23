@@ -3,11 +3,13 @@ use bevy::ui::FocusPolicy;
 use bevy::utils::default;
 
 pub struct StyleBuilder {
-    pub display: Display,
-    pub width: Val,
-    pub height: Val,
-    pub grid_template_rows: Vec<RepeatedGridTrack>,
-    pub grid_template_columns: Vec<RepeatedGridTrack>,
+    display: Display,
+    width: Val,
+    height: Val,
+    grid_column: GridPlacement,
+    grid_template_rows: Vec<RepeatedGridTrack>,
+    grid_template_columns: Vec<RepeatedGridTrack>,
+    padding: UiRect,
 }
 
 impl StyleBuilder {
@@ -16,13 +18,25 @@ impl StyleBuilder {
             display: Default::default(),
             width: Default::default(),
             height: Default::default(),
+            grid_column: Default::default(),
             grid_template_rows: vec![],
             grid_template_columns: vec![],
+            padding: Default::default(),
         }
     }
 
     pub fn with_grid(mut self) -> Self {
         self.display = Display::Grid;
+        self
+    }
+
+    pub fn span_columns(mut self, cols: u16) -> Self {
+        self.grid_column = GridPlacement::span(cols);
+        self
+    }
+    
+    pub fn pad_all_px(mut self, padding: f32) -> Self {
+        self.padding = UiRect::all(Val::Px(padding));
         self
     }
 
