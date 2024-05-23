@@ -25,19 +25,21 @@ pub fn spawn_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
                             GridTrack::px(20.),
                         ])
                 })
+                .with_background_color(Color::BLACK)
                 .build()
         )
         .with_children(|builder| {
             // Header
             builder
                 .spawn(NodeBundleBuilder::new()
-                        .with_style(|style_builder| {
-                            style_builder
-                                .with_grid()
-                                .span_columns(2)
-                                .pad_all_px(6.0)
-                        })
-                        .build()
+                    .with_style(|style_builder| {
+                        style_builder
+                            .with_grid()
+                            .span_columns(2)
+                            .pad_all_px(12.0)
+                    })
+                    .with_background_color(Color::BLACK)
+                    .build()
                 )
                 .with_children(|builder| {
                     text_bundle(builder, font.clone(), "Bevy CSS Grid Layout Example", 24.0, Color::BLACK);
@@ -45,31 +47,21 @@ pub fn spawn_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
 
             // Main content grid (auto placed in row 2, column 1)
             builder
-                .spawn(NodeBundle {
-                    style: Style {
-                        // Make the height of the node fill its parent
-                        height: Val::Percent(100.0),
-                        // Make the grid have a 1:1 aspect ratio meaning it will scale as an exact square
-                        // As the height is set explicitly, this means the width will adjust to match the height
-                        aspect_ratio: Some(1.0),
-                        // Use grid layout for this node
-                        display: Display::Grid,
-                        // Add 24px of padding around the grid
-                        padding: UiRect::all(Val::Px(24.0)),
-                        // Set the grid to have 4 columns all with sizes minmax(0, 1fr)
-                        // This creates 4 exactly evenly sized columns
-                        grid_template_columns: RepeatedGridTrack::flex(4, 1.0),
-                        // Set the grid to have 4 rows all with sizes minmax(0, 1fr)
-                        // This creates 4 exactly evenly sized rows
-                        grid_template_rows: RepeatedGridTrack::flex(4, 1.0),
-                        // Set a 12px gap/gutter between rows and columns
-                        row_gap: Val::Px(12.0),
-                        column_gap: Val::Px(12.0),
-                        ..default()
-                    },
-                    background_color: BackgroundColor(Color::DARK_GRAY),
-                    ..default()
-                })
+                .spawn(
+                    NodeBundleBuilder::new()
+                        .with_style(|style_builder| {
+                            style_builder
+                                .with_grid()
+                                .fill_parent_height()
+                                .aspect_ratio(1.0)
+                                .pad_all_px(24.0)
+                                .flex_columns(4, 1.0)
+                                .flex_rows(4, 1.0)
+                                .gutter_all_px(6.0)
+                        })
+                        .with_background_color(Color::DARK_GRAY)
+                        .build()
+                )
                 .with_children(|builder| {
                     // Note there is no need to specify the position for each grid item. Grid items that are
                     // not given an explicit position will be automatically positioned into the next available
@@ -237,10 +229,6 @@ pub fn text_bundle(builder: &mut ChildBuilder, font: Handle<Font>, text: &str, f
             color,
         },
     ));
-}
-
-pub fn spawn_nested_text_bundle(builder: &mut ChildBuilder, font: Handle<Font>, text: &str) {
-    builder.spawn(text_bundle());
 }
 
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);

@@ -1,117 +1,92 @@
-use bevy::prelude::{AlignContent, AlignItems, AlignSelf, BackgroundColor, BorderColor, Direction, Display, FlexDirection, FlexWrap, GlobalTransform, GridAutoFlow, GridPlacement, GridTrack, InheritedVisibility, JustifyContent, JustifyItems, JustifySelf, Node, NodeBundle, Overflow, PositionType, RepeatedGridTrack, Style, Transform, UiRect, Val, ViewVisibility, Visibility, ZIndex};
+use bevy::math::AspectRatio;
+use bevy::prelude::{AlignContent, AlignItems, AlignSelf, BackgroundColor, BorderColor, Color, Direction, Display, FlexDirection, FlexWrap, GlobalTransform, GridAutoFlow, GridPlacement, GridTrack, InheritedVisibility, JustifyContent, JustifyItems, JustifySelf, Node, NodeBundle, Overflow, PositionType, RepeatedGridTrack, Style, Transform, UiRect, Val, ViewVisibility, Visibility, ZIndex};
 use bevy::ui::FocusPolicy;
 use bevy::utils::default;
 
 pub struct StyleBuilder {
-    display: Display,
-    width: Val,
-    height: Val,
-    grid_column: GridPlacement,
-    grid_template_rows: Vec<RepeatedGridTrack>,
-    grid_template_columns: Vec<RepeatedGridTrack>,
-    padding: UiRect,
+    style: Style,
 }
 
 impl StyleBuilder {
     pub fn new() -> Self {
         StyleBuilder {
-            display: Default::default(),
-            width: Default::default(),
-            height: Default::default(),
-            grid_column: Default::default(),
-            grid_template_rows: vec![],
-            grid_template_columns: vec![],
-            padding: Default::default(),
+            style: Style::default(),
         }
     }
 
+    pub fn gutter_all_px(mut self, gutter: f32) -> Self {
+        self.style.row_gap = Val::Px(gutter);
+        self.style.column_gap = Val::Px(gutter);
+        self
+    }
+
+    pub fn fill_parent_height(mut self) -> Self {
+        self.style.height = Val::Percent(100.0);
+        self
+    }
+
+    pub fn flex_columns(mut self, columns: u16, size: f32) -> Self {
+        self.style.grid_template_columns = RepeatedGridTrack::flex(columns, size);
+        self
+    }
+
+    pub fn flex_rows(mut self, rows: u16, size: f32) -> Self {
+        self.style.grid_template_rows = RepeatedGridTrack::flex(rows, size);
+        self
+    }
+
     pub fn with_grid(mut self) -> Self {
-        self.display = Display::Grid;
+        self.style.display = Display::Grid;
         self
     }
 
     pub fn span_columns(mut self, cols: u16) -> Self {
-        self.grid_column = GridPlacement::span(cols);
+        self.style.grid_column = GridPlacement::span(cols);
         self
     }
-    
+
     pub fn pad_all_px(mut self, padding: f32) -> Self {
-        self.padding = UiRect::all(Val::Px(padding));
+        self.style.padding = UiRect::all(Val::Px(padding));
         self
     }
 
     pub fn width_and_height_in_percent(mut self, width: f32, height: f32) -> Self {
-        self.width = Val::Percent(width);
-        self.height = Val::Percent(height);
+        self.style.width = Val::Percent(width);
+        self.style.height = Val::Percent(height);
         self
     }
 
     pub fn grid_template_columns(mut self, cols: Vec<RepeatedGridTrack>) -> Self {
-        self.grid_template_columns = cols;
+        self.style.grid_template_columns = cols;
         self
     }
     pub fn grid_template_rows(mut self, rows: Vec<RepeatedGridTrack>) -> Self {
-        self.grid_template_rows = rows;
+        self.style.grid_template_rows = rows;
+        self
+    }
+
+    pub fn aspect_ratio(mut self, aspect_ratio: f32) -> Self {
+        self.style.aspect_ratio = Some(aspect_ratio);
         self
     }
 
     pub fn build(self) -> Style {
-        Style {
-            display: self.display,
-            width: self.width,
-            height: self.height,
-            grid_template_rows: self.grid_template_rows,
-            grid_template_columns: self.grid_template_columns,
-            ..default()
-        }
+        self.style.clone()
     }
 }
 
 pub struct NodeBundleBuilder {
-    pub node: Node,
-    /// Styles which control the layout (size and position) of the node and it's children
-    /// In some cases these styles also affect how the node drawn/painted.
-    pub style: Style,
-    /// The background color, which serves as a "fill" for this node
-    pub background_color: BackgroundColor,
-    /// The color of the Node's border
-    pub border_color: BorderColor,
-    /// Whether this node should block interaction with lower nodes
-    pub focus_policy: FocusPolicy,
-    /// The transform of the node
-    ///
-    /// This component is automatically managed by the UI layout system.
-    /// To alter the position of the `NodeBundle`, use the properties of the [`Style`] component.
-    pub transform: Transform,
-    /// The global transform of the node
-    ///
-    /// This component is automatically updated by the [`TransformPropagate`](`bevy_transform::TransformSystem::TransformPropagate`) systems.
-    /// To alter the position of the `NodeBundle`, use the properties of the [`Style`] component.
-    pub global_transform: GlobalTransform,
-    /// Describes the visibility properties of the node
-    pub visibility: Visibility,
-    /// Inherited visibility of an entity.
-    pub inherited_visibility: InheritedVisibility,
-    /// Algorithmically-computed indication of whether an entity is visible and should be extracted for rendering
-    pub view_visibility: ViewVisibility,
-    /// Indicates the depth at which the node should appear in the UI
-    pub z_index: ZIndex,
+    node_bundle: NodeBundle,
 }
 
 impl NodeBundleBuilder {
     pub fn new() -> Self {
         NodeBundleBuilder {
-            node: Node::default(),
-            style: Style::default(),
-            background_color: BackgroundColor::default(),
-            border_color: BorderColor::default(),
-            focus_policy: FocusPolicy::Block,
-            transform: Transform::default(),
-            global_transform: GlobalTransform::default(),
-            visibility: Visibility::default(),
-            inherited_visibility: InheritedVisibility::default(),
-            view_visibility: ViewVisibility::default(),
-            z_index: ZIndex::default(),
+            node_bundle: NodeBundle {
+                style: Style::default(),
+                background_color: BackgroundColor::default(),
+                ..default()
+            }
         }
     }
 
@@ -121,23 +96,16 @@ impl NodeBundleBuilder {
     {
         let builder = StyleBuilder::new();
         let style = build_fn(builder).build();
-        self.style = style;
+        self.node_bundle.style = style;
+        self
+    }
+
+    pub fn with_background_color(mut self, color: Color) -> Self {
+        self.node_bundle.background_color = BackgroundColor(color);
         self
     }
 
     pub fn build(&self) -> NodeBundle {
-        NodeBundle {
-            node: self.node,
-            style: self.style.clone(),
-            background_color: self.background_color,
-            border_color: self.border_color,
-            focus_policy: self.focus_policy,
-            transform: self.transform,
-            global_transform: self.global_transform,
-            visibility: self.visibility,
-            inherited_visibility: self.inherited_visibility,
-            view_visibility: self.view_visibility,
-            z_index: self.z_index,
-        }
+        self.node_bundle.clone()
     }
 }
