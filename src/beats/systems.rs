@@ -3,7 +3,7 @@ use crate::beats::TextComponent;
 use bevy::asset::{AssetServer, Assets, Handle};
 use bevy::hierarchy::{ChildBuilder, Children};
 use bevy::math::Vec2;
-use bevy::prelude::{default, AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle, Changed, Color, ColorMaterial, Commands, Display, EventReader, EventWriter, Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle, PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle, Transform, Triangle2d, UiRect, Val, Visibility, With};
+use bevy::prelude::{default, AlignItems, BackgroundColor, BorderColor, BuildChildren, Button, ButtonBundle, Changed, Color, ColorMaterial, Commands, Display, EventReader, EventWriter, Font, GridPlacement, GridTrack, Interaction, JustifyContent, JustifyItems, Mesh, NodeBundle, PositionType, Query, RepeatedGridTrack, Res, ResMut, Style, Text, TextBundle, TextStyle, Transform, Triangle2d, UiRect, Val, Visibility, With, JustifyText};
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use crate::beats::builders::StoryBuilder;
 use crate::ui::builders::{add_button, NodeBundleBuilder};
@@ -189,6 +189,7 @@ pub fn item_rect(builder: &mut ChildBuilder, color: Color, with_button: bool, fo
                     style_builder
                         .with_grid()
                         .width_and_height_in_percent(100.0, 100.0)
+                        .centered_content()
                 })   
             }
 
@@ -207,7 +208,9 @@ pub fn text_bundle(builder: &mut ChildBuilder, font: Handle<Font>, text: &str, f
             font_size,
             color,
         },
-    ));
+    )
+        .with_text_justify(JustifyText::Center)
+    );
 }
 
 pub(crate) const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);

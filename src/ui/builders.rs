@@ -1,9 +1,8 @@
-use bevy::math::AspectRatio;
-use bevy::prelude::{AlignContent, AlignItems, AlignSelf, BackgroundColor, BorderColor, BuildChildren, ButtonBundle, ChildBuilder, Color, Direction, Display, FlexDirection, FlexWrap, GlobalTransform, GridAutoFlow, GridPlacement, GridTrack, Handle, InheritedVisibility, JustifyContent, JustifyItems, JustifySelf, Node, NodeBundle, Overflow, PositionType, RepeatedGridTrack, Style, Transform, UiRect, Val, ViewVisibility, Visibility, ZIndex};
+use bevy::prelude::{BackgroundColor, BorderColor, BuildChildren, ButtonBundle, ChildBuilder, Color, Display, GridPlacement, Handle, JustifyContent, NodeBundle, RepeatedGridTrack, Style, UiRect, Val};
 use bevy::text::Font;
-use bevy::ui::FocusPolicy;
 use bevy::utils::default;
-use crate::beats::systems::{NORMAL_BUTTON, text_bundle};
+
+use crate::beats::systems::text_bundle;
 
 pub struct StyleBuilder {
     style: Style,
@@ -19,6 +18,11 @@ impl StyleBuilder {
     pub fn gutter_all_px(mut self, gutter: f32) -> Self {
         self.style.row_gap = Val::Px(gutter);
         self.style.column_gap = Val::Px(gutter);
+        self
+    }
+
+    pub fn centered_content(mut self) -> Self {
+        self.style.justify_content =   JustifyContent::Center;
         self
     }
 
@@ -77,16 +81,17 @@ impl StyleBuilder {
     }
 }
 
-pub fn add_button<F>(mut child_builder: &mut ChildBuilder, text: &str, font: Handle<Font>, font_size: f32, text_color: Color, button_color:Color, button_border_color: Color, build_fn: F)
+pub fn add_button<F>(mut child_builder: &mut ChildBuilder, text: &str, font: Handle<Font>, font_size: f32, text_color: Color, button_color: Color, button_border_color: Color, build_fn: F)
     where
         F: FnOnce(StyleBuilder) -> StyleBuilder, {
     child_builder
-        .spawn(ButtonBundle {
-            style: build_fn(StyleBuilder::new()).build(),
-            border_color: BorderColor(button_border_color),
-            background_color: BackgroundColor(button_color),
-            ..default()
-        })
+        .spawn(
+            ButtonBundle {
+                style: build_fn(StyleBuilder::new()).build(),
+                border_color: BorderColor(button_border_color),
+                background_color: BackgroundColor(button_color),
+                ..default()
+            })
         .with_children(|parent| {
             text_bundle(parent, font, text, font_size, text_color);
         });

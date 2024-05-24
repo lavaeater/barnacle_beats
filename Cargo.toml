@@ -69,6 +69,8 @@ webbrowser = { version = "1.0.1", features = ["hardened"] }
 ron = "*"
 serde = "*"
 nom = "7.1.3"
+bevy-inspector-egui = "0.24.0"
+sickle_ui = { git = "https://github.com/UmbraLuminosa/sickle_ui", branch = "main" }
 
 ## keep the following in sync with Bevy's dependencies
 #winit = { version = "0.30.0", default-features = false }
