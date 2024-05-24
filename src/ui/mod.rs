@@ -1,2 +1,3 @@
 pub mod builders;
-mod ui_updates;
+pub mod banner_widget;
+pub mod fps_widget;
