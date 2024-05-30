@@ -16,8 +16,7 @@ use sickle_ui::{
 };
 
 pub fn plugin(app: &mut App) {
-    app //
-        // .add_plugins(FrameTimeDiagnosticsPlugin)
+    app
         .add_systems(Update, update_fps);
 }
 
